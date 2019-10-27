@@ -1,0 +1,51 @@
+version: "3"
+
+services:
+   
+  client-dev:
+    build:
+      context: .
+      dockerfile: docker/node-dev/Dockerfile
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.client-dev.entrypoints=web
+      - traefik.http.routers.client-dev.rule=PathPrefix(`/`)
+      - traefik.http.services.client-dev.loadbalancer.server.port=3000
+    volumes:
+      - ./client:/app
+
+  server-dev:
+    build:
+      context: .
+      dockerfile: docker/node-dev/Dockerfile
+    environment:
+      DB_HOST: pg-dev
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME} 
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.server-dev.entrypoints=web
+      - traefik.http.routers.server-dev.rule=PathPrefix(`/api`)
+      - traefik.http.services.server-dev.loadbalancer.server.port=3001
+    volumes:
+      - ./server:/app
+
+  pg-dev:
+    image: postgres:11.5-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+  proxy:
+    image: traefik:2.0
+    command:
+      # - --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - ${DEV_HTTP_PORT}:80
+      - ${DEV_TRAEFIK_UI_PORT}:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro

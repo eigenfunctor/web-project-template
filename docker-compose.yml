@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+   
+  client-prod:
+    image: ${CLIENT_IMAGE_NAME}
+    build:
+      context: .
+      dockerfile: docker/node-prod/Dockerfile
+      args:
+        DIRECTORY: ./client
+    environment:
+      API_ENDPOINT: http://server-prod:3000
+    ports:
+      - ${CLIENT_PROD_PORT}:3000
+
+  server-prod:
+    image: ${SERVER_IMAGE_NAME}
+    build:
+      context: .
+      dockerfile: docker/node-prod/Dockerfile
+      args:
+        DIRECTORY: ./server
+    environment:
+      DB_HOST: pg-prod
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME} 
+
+  pg-prod:
+    image: postgres:11.5-alpine
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}

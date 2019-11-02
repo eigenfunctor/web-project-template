@@ -1,8 +1,9 @@
 import React from "react";
-import Page from "../components/page";
+import { Box } from "rebass";
 
 const Home: React.FunctionComponent = () => {
-  return <Page />;
+  // TODO: code homepage
+  return <Box />;
 };
 
 export default Home;

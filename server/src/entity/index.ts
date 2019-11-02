@@ -1,4 +1,5 @@
-export { Admin } from "./Admin";
-export { ApiUser } from "./ApiUser";
-export { EmailVerification } from "./EmailVerification";
-export { LocalUser } from "./LocalUser";
+export { Admin } from "./admin";
+export { ApiUser } from "./api-user";
+export { EmailVerification } from "./email-verification";
+export { LocalUser } from "./local-user";
+export { PasswordReset } from "./password-reset";

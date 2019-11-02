@@ -1,6 +1,6 @@
 module.exports = {
   synchronize: process.env.NODE_ENV !== "production",
-  logging: process.env.NODE_ENV !== "production" ? "all" : ["schema", "error"],
+  logging: false,
   entities: ["src/entity/**/*.ts"],
   migrations: ["src/migration/**/*.ts"],
   subscribers: ["src/subscriber/**/*.ts"],

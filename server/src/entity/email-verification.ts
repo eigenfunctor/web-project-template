@@ -5,7 +5,7 @@ import {
   JoinColumn,
   OneToOne
 } from "typeorm";
-import { LocalUser } from "./LocalUser";
+import { LocalUser } from "./local-user";
 
 @Entity()
 export class EmailVerification {
@@ -16,6 +16,9 @@ export class EmailVerification {
   @JoinColumn()
   user: LocalUser;
 
-  @Column({ nullable: true })
+  @Column()
+  email: string;
+
+  @Column()
   verified?: boolean;
 }

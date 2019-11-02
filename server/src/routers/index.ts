@@ -1,9 +1,7 @@
 import { Connection } from "typeorm";
-import { Application } from "express";
-import { useAuthRouter } from "./auth";
-import { useEchoRouter } from "./echo";
+import { Router } from "express";
+import { useAuthRoutes } from "./provider";
 
-export default function useRouters(db: Connection, app: Application) {
-  useAuthRouter(db, app);
-  useEchoRouter(db, app);
+export default function useRoutes(db: Connection, parentRouter: Router) {
+  useAuthRoutes(db, parentRouter);
 }

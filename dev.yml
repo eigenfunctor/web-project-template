@@ -1,6 +1,20 @@
 version: "3"
 
 services:
+
+  proxy:
+    image: traefik:2.0
+    command:
+      #- --log.level=DEBUG
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - ${DEV_HTTP_PORT}:80
+      - ${DEV_TRAEFIK_UI_PORT}:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
    
   client-dev:
     build:
@@ -19,33 +33,24 @@ services:
       context: .
       dockerfile: docker/node-dev/Dockerfile
     environment:
+      GRAPHQL_PLAYGROUND_ENDPOINT: /api/graphql
+      JWT_SECRET: POOR_TOKEN_SECRET
       DB_HOST: pg-dev
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME} 
     labels:
       - traefik.enable=true
       - traefik.http.routers.server-dev.entrypoints=web
-      - traefik.http.routers.server-dev.rule=PathPrefix(`/api`)
+      - traefik.http.routers.server-dev.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`)
       - traefik.http.services.server-dev.loadbalancer.server.port=3001
     volumes:
       - ./server:/app
+
+  smtp:
+    image: namshi/smtp
 
   pg-dev:
     image: postgres:11.5-alpine
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-
-  proxy:
-    image: traefik:2.0
-    command:
-      # - --log.level=DEBUG
-      - --api.insecure=true
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-    ports:
-      - ${DEV_HTTP_PORT}:80
-      - ${DEV_TRAEFIK_UI_PORT}:8080
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro

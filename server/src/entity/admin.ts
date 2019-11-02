@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, JoinColumn, OneToOne } from "typeorm";
-import { ApiUser } from "./ApiUser";
+import { ApiUser } from "./api-user";
 
 @Entity()
 export class Admin {

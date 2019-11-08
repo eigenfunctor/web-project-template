@@ -11,8 +11,8 @@ services:
       - --providers.docker.exposedbydefault=false
       - --entrypoints.web.address=:80
     ports:
-      - ${DEV_HTTP_PORT}:80
-      - ${DEV_TRAEFIK_UI_PORT}:8080
+      - ${DEV_HTTP_PORT-3000}:80
+      - ${DEV_TRAEFIK_UI_PORT-3001}:8080
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
    
@@ -33,11 +33,12 @@ services:
       context: .
       dockerfile: docker/node-dev/Dockerfile
     environment:
-      GRAPHQL_PLAYGROUND_ENDPOINT: /api/graphql
-      JWT_SECRET: POOR_TOKEN_SECRET
+      APP_BASE_URL: http://localhost:${DEV_HTTP_PORT-3000}
+      SMTP_HOST: smtp
+      SMTP_PORT: 25
       DB_HOST: pg-dev
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME} 
+      DB_PASSWORD: ${DB_PASSWORD-server-dev-test-password}
+      DB_NAME: ${DB_NAME-server-dev-db} 
     labels:
       - traefik.enable=true
       - traefik.http.routers.server-dev.entrypoints=web
@@ -48,9 +49,11 @@ services:
 
   smtp:
     image: namshi/smtp
+    logging:
+          driver: none
 
   pg-dev:
     image: postgres:11.5-alpine
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD-server-dev-test-password}
+      POSTGRES_DB: ${DB_NAME-server-dev-db}

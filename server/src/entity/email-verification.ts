@@ -1,9 +1,10 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
   JoinColumn,
-  OneToOne
+  OneToOne,
+  PrimaryGeneratedColumn
 } from "typeorm";
 import { LocalUser } from "./local-user";
 
@@ -20,5 +21,8 @@ export class EmailVerification {
   email: string;
 
   @Column()
-  verified?: boolean;
+  verified: boolean;
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

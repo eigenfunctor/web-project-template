@@ -4,8 +4,17 @@ import { ApiUser, Admin } from "../../entity";
 
 export const typeDefs = gql`
   extend type Query {
-    users(params: UsersQueryInput!): [ApiUser!]
     isAdmin(profile: ProfileInput!): Boolean!
+
+    users(params: UsersQueryInput!): [ApiUser!]
+  }
+
+  extend type Mutation {
+    setAdmin(
+      userProfile: ProfileInput!
+      isAdmin: Boolean!
+      overrideCode: String
+    ): SetAdminResult!
   }
 
   input UsersQueryInput {
@@ -20,14 +29,6 @@ export const typeDefs = gql`
     DESCEND
   }
 
-  extend type Mutation {
-    setAdmin(
-      userProfile: ProfileInput!
-      isAdmin: Boolean!
-      overrideCode: String
-    ): SetAdminResult!
-  }
-
   type SetAdminResult {
     success: Boolean!
     errors: [String!]!
@@ -36,6 +37,11 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
+    // Assert if the logged in user is an administrator.
+    async isAdmin(_, { profile }, { db }) {
+      return isAdminHelper(db, profile);
+    },
+
     // Return a paginated list of users if the authorized profile belongs to an admin.
     async users(_, { params }, { db, profile }) {
       const { search, sort, skip, limit } = params;
@@ -48,13 +54,18 @@ export const resolvers = {
 
       //TODO: return list of users
       return [];
-    },
-
-    async isAdmin(_, { profile }, { db }) {
-      return isAdminHelper(db, profile);
     }
   },
   Mutation: {
+    /**
+     * Set an ApiUser asscaited to the provider/id pair in
+     * the given profile record to the isAdmin parameter.
+     * If the SET_ADMIN_OVERRIDE_CODE is set to some string,
+     * then passing that string as overrideCode allows the request
+     * to succeed without adminstrative rights.
+     * This should only be used to bootstrap the first
+     * administrator into the database.
+     */
     async setAdmin(_, { userProfile, isAdmin, overrideCode }, { db, profile }) {
       const override =
         typeof process.env.SET_ADMIN_OVERRIDE_CODE === "string" &&

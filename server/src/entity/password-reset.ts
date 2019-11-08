@@ -1,9 +1,10 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
   JoinColumn,
-  OneToOne
+  OneToOne,
+  PrimaryGeneratedColumn
 } from "typeorm";
 import { LocalUser } from "./local-user";
 
@@ -15,4 +16,7 @@ export class PasswordReset {
   @OneToOne(type => LocalUser)
   @JoinColumn()
   user: LocalUser;
+
+  @Column()
+  createdAt: string;
 }

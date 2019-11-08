@@ -1,7 +1,9 @@
 import { gql, UserInputError, ForbiddenError } from "apollo-server";
 import { LocalUser, EmailVerification, PasswordReset } from "../../entity";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../../email";
 
 import argon2 = require("argon2");
+import moment = require("moment");
 
 export const typeDefs = gql`
   extend type Query {
@@ -11,11 +13,22 @@ export const typeDefs = gql`
   extend type Mutation {
     signup(form: SignupForm!, validate: Boolean): SignupResults!
 
-    passwordReset(email: String!, baseURL: String!): Boolean
+    verifyAccount(verificationID: String!): VerifyAccountResult!
 
-    verifyAccount(id: String!): VerifyAccountResult!
+    resendVerification(email: String!): Boolean
 
-    resendVerification(email: String!, baseURL: String!): Boolean
+    sendPasswordReset(email: String!): Boolean
+
+    changePassword(
+      form: PasswordResetForm!
+      validate: Boolean
+    ): PasswordResetResults!
+  }
+
+  input SignupForm {
+    email: String!
+    password: String!
+    confirmPassword: String!
   }
 
   type SignupResults {
@@ -30,20 +43,34 @@ export const typeDefs = gql`
 
   type VerifyAccountResult {
     success: Boolean!
-    inputErrors: [String!]!
+    inputErrors: VerifyAccountInputErrors!
   }
 
-  input SignupForm {
-    email: String!
+  type VerifyAccountInputErrors {
+    verificationID: [String!]!
+  }
+
+  input PasswordResetForm {
+    resetID: String!
     password: String!
     confirmPassword: String!
+  }
+
+  type PasswordResetResults {
+    success: Boolean!
+    inputErrors: PasswordResetInputErrors!
+  }
+
+  type PasswordResetInputErrors {
+    resetID: [String!]!
+    password: [String!]!
   }
 `;
 
 export const resolvers = {
   Query: {
     async isVerified(_, __, { db, profile }) {
-      if (!profile.id) {
+      if (!(profile && profile.id)) {
         throw new ForbiddenError("Unauthorized.");
       }
 
@@ -129,49 +156,34 @@ export const resolvers = {
       await db.manager.save(user);
       await db.manager.save(verification);
 
-      // TODO: send verification email
+      sendVerificationEmail(verification.email, verification.id);
 
       return formStatus;
     },
 
-    // Send a password reset link to the email of a locally registered user or fail silently if no user is found.
-    async passwordReset(_, { email, baseURL }, { db }) {
-      const user = await db.manager.findOne(LocalUser, { email });
-
-      // If there is no locally registered user with the given email, fail silently.
-      if (!user) {
-        return;
-      }
-
-      const reset = new PasswordReset();
-      reset.user = user;
-
-      db.manager.save(reset);
-
-      // TODO: send password reset email if req.body.email maps to a localuser.
-    },
-
     // Set the verified flag in the verification entry if it exists or fail silently.
-    async verifyAccount(_, { id }, { db }) {
-      const verification = await db.manager.findOne(EmailVerification, { id });
+    async verifyAccount(_, { verificationID }, { db }) {
+      const verification = await db.manager.findOne(EmailVerification, {
+        id: verificationID
+      });
 
       if (!verification) {
         return {
           success: false,
-          inputErrors: [
-            "There is No pending verification with the given verification ID."
-          ]
+          inputErrors: {
+            verificationID: ["This verification link is invalid."]
+          }
         };
       }
 
       verification.verified = true;
-      db.manager.save(verification);
+      await db.manager.save(verification);
 
-      return { success: true, inputErrors: [] };
+      return { success: true, inputErrors: { verificationID: [] } };
     },
 
     // Send a verification link to the email of a locally registered user or fail silently if no user is found.
-    async resendVerification(_, { email, baseURL }, { db }) {
+    async resendVerification(_, { email }, { db }) {
       const user = await db.manager.findOne(LocalUser, { email });
 
       // If there is no locally registered user with the given email, fail silently.
@@ -181,21 +193,109 @@ export const resolvers = {
 
       let verification = await db.manager.findOne(EmailVerification, { user });
 
-      // If there is no pending verification for the registered user, create a new one.
-      if (!verification) {
-        verification = new EmailVerification();
-        verification.user = user;
+      if (verification) {
+        // If there is no pending verification for the registered user, create a new one.
+        if (verification.verified) {
+          return;
+        }
+
+        await db.manager.remove(verification);
       }
 
-      if (verification.verified) {
+      verification = new EmailVerification();
+      verification.user = user;
+      verification.email = user.email;
+      verification.verified = false;
+
+      await db.manager.save(verification);
+
+      await sendVerificationEmail(verification.email, verification.id);
+    },
+
+    // Send a password reset link to the email of a locally registered user or fail silently if no user is found.
+    async sendPasswordReset(_, { email }, { db }) {
+      const user = await db.manager.findOne(LocalUser, { email });
+
+      // If there is no locally registered user with the given email, fail silently.
+      if (!user) {
         return;
       }
 
-      verification.email = user.email;
+      // If there is a pending reset, remove it and create a new one.
+      let reset = await db.manager.findOne(PasswordReset, { user });
 
-      db.manager.save(verification);
+      if (reset) {
+        await db.manager.remove(reset);
+      }
 
-      // TODO: send a verification email.
+      reset = new PasswordReset();
+      reset.user = user;
+      reset.createdAt = moment.utc().format();
+
+      await db.manager.save(reset);
+
+      await sendPasswordResetEmail(reset.user.email, reset.id);
+    },
+
+    async changePassword(_, { form, validate }, { db }) {
+      const formStatus = {
+        success: true,
+        inputErrors: {
+          resetID: [],
+          password: []
+        }
+      };
+
+      const reset = await db.manager.findOne(PasswordReset, {
+        where: { id: form.resetID },
+        relations: ["user"]
+      });
+
+      // Fail if there is no password reset entry with the given reset ID
+      if (!reset) {
+        formStatus.inputErrors.resetID.push(
+          "This password reset link is invalid."
+        );
+        formStatus.success = false;
+      }
+
+      // Allow up to 24 hours to reset passwords.
+      if (reset) {
+        const duration = moment.duration(
+          moment().diff(moment.utc(reset.createdAt))
+        );
+
+        if (duration.asHours() > 24) {
+          formStatus.inputErrors.resetID.push(
+            "This password reset link is expired."
+          );
+          formStatus.success = false;
+        }
+      }
+
+      if (form.password !== form.confirmPassword) {
+        formStatus.inputErrors.password.push(
+          "Password and password confirmation do not match."
+        );
+        formStatus.success = false;
+      }
+
+      // If the request is to submit the form and if there are errors, return the validation errors.
+      if (!formStatus.success) {
+        return formStatus;
+      }
+
+      // If the request is only to validate the form, return the validation results.
+      if (validate) {
+        return formStatus;
+      }
+
+      reset.user.passwordHash = await argon2.hash(form.password);
+
+      await db.manager.remove(reset);
+      await db.manager.save(reset.user);
+
+      return formStatus;
     }
   }
 };

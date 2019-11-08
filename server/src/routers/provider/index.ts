@@ -11,7 +11,6 @@ export function useAuthRoutes(db: Connection, parentRouter: Router) {
 
   useLocalProvider(db, router);
 
-  // The /auth/logout endpoint will logout the user from the session and redirect to the home page.
   router.get("/logout", async (req, res) => {
     req.logout();
     res.redirect("/");

@@ -8,11 +8,16 @@ import session = require("express-session");
 import bodyParser = require("body-parser");
 import passport = require("passport");
 
+import { LocalUser } from "./entity/local-user";
+import { TableFilter, buildTableQuery } from "./graphql/table";
+
 async function main() {
   try {
     const db = await createConnection();
     const app = express();
     const port = parseInt(process.env.API_SERVER_PORT) || 3001;
+
+    const qb = db.manager.createQueryBuilder(LocalUser, "user");
 
     app.use(
       session({

@@ -49,14 +49,18 @@ export function useLocalProvider(db: Connection, parentrouter: Router) {
           apiUser = new ApiUser();
           apiUser.provider = "local";
           apiUser.id = user.id;
-
-          db.manager.save(apiUser);
         }
+
+        apiUser.loggedName = user.fullName;
+        apiUser.loggedEmail = user.email;
+
+        await db.manager.save(apiUser);
 
         done(null, {
           provider: apiUser.provider,
           id: apiUser.id,
-          emails: [user.email]
+          name: apiUser.loggedName,
+          email: apiUser.loggedEmail
         });
       }
     )

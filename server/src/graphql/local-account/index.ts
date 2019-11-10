@@ -1,3 +1,4 @@
+import { Connection } from "typeorm";
 import { gql, UserInputError, ForbiddenError } from "apollo-server";
 import { LocalUser, EmailVerification, PasswordReset } from "../../entity";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../../email";
@@ -27,6 +28,7 @@ export const typeDefs = gql`
 
   input SignupForm {
     email: String!
+    fullName: String!
     password: String!
     confirmPassword: String!
   }
@@ -69,7 +71,11 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    async isVerified(_, __, { db, profile }) {
+    async isVerified(
+      _,
+      __,
+      { db, profile }: { db: Connection; profile?: any }
+    ) {
       if (!(profile && profile.id)) {
         throw new ForbiddenError("Unauthorized.");
       }
@@ -87,7 +93,7 @@ export const resolvers = {
   },
   Mutation: {
     // Validate or submit a signup form.
-    async signup(_, { form, validate }, { db }) {
+    async signup(_, { form, validate }, { db }: { db: Connection }) {
       // Keep track of form errors in this record.
       const formStatus = {
         success: true,
@@ -146,6 +152,7 @@ export const resolvers = {
       const user = new LocalUser();
 
       user.email = form.email;
+      user.fullName = form.fullName;
       user.passwordHash = await argon2.hash(form.password);
 
       const verification = new EmailVerification();
@@ -162,7 +169,7 @@ export const resolvers = {
     },
 
     // Set the verified flag in the verification entry if it exists or fail silently.
-    async verifyAccount(_, { verificationID }, { db }) {
+    async verifyAccount(_, { verificationID }, { db }: { db: Connection }) {
       const verification = await db.manager.findOne(EmailVerification, {
         id: verificationID
       });
@@ -183,7 +190,7 @@ export const resolvers = {
     },
 
     // Send a verification link to the email of a locally registered user or fail silently if no user is found.
-    async resendVerification(_, { email }, { db }) {
+    async resendVerification(_, { email }, { db }: { db: Connection }) {
       const user = await db.manager.findOne(LocalUser, { email });
 
       // If there is no locally registered user with the given email, fail silently.
@@ -213,7 +220,7 @@ export const resolvers = {
     },
 
     // Send a password reset link to the email of a locally registered user or fail silently if no user is found.
-    async sendPasswordReset(_, { email }, { db }) {
+    async sendPasswordReset(_, { email }, { db }: { db: Connection }) {
       const user = await db.manager.findOne(LocalUser, { email });
 
       // If there is no locally registered user with the given email, fail silently.
@@ -237,7 +244,7 @@ export const resolvers = {
       await sendPasswordResetEmail(reset.user.email, reset.id);
     },
 
-    async changePassword(_, { form, validate }, { db }) {
+    async changePassword(_, { form, validate }, { db }: { db: Connection }) {
       const formStatus = {
         success: true,
         inputErrors: {

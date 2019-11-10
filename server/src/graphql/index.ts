@@ -4,6 +4,8 @@ import { Connection } from "typeorm";
 import * as admin from "./admin";
 import * as apiUser from "./api-user";
 import * as localAccount from "./local-account";
+import * as table from "./table";
+import * as json from "./json";
 
 const baseTypeDefs = gql`
   type Query
@@ -12,12 +14,20 @@ const baseTypeDefs = gql`
 
 const typeDefs = [
   baseTypeDefs,
+  json.typeDefs,
   admin.typeDefs,
   apiUser.typeDefs,
-  localAccount.typeDefs
+  localAccount.typeDefs,
+  table.typeDefs
 ];
 
-const resolvers = [admin.resolvers, apiUser.resolvers, localAccount.resolvers];
+const resolvers = [
+  json.resolvers,
+  admin.resolvers,
+  apiUser.resolvers,
+  localAccount.resolvers,
+  table.resolvers
+];
 
 const createServer = (db: Connection) =>
   new ApolloServer({

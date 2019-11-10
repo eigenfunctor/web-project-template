@@ -1445,6 +1445,11 @@ graphql-tools@^4.0.0:
     iterall "^1.1.3"
     uuid "^3.1.0"
 
+graphql-type-json@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/graphql-type-json/-/graphql-type-json-0.3.0.tgz#bb32e1b74bf52ebc690f9df12b4067bc061f818a"
+  integrity sha512-lnxg5HiB95yxy+/5cDKtP6pZo0zgntsOmqsjeCBXFGJ4YoMF3+1YaSEKWJntNTu+VsAm3zf6lPxFpp1kxzofLA==
+
 graphql-upload@^8.0.2:
   version "8.1.0"
   resolved "https://registry.yarnpkg.com/graphql-upload/-/graphql-upload-8.1.0.tgz#6d0ab662db5677a68bfb1f2c870ab2544c14939a"
@@ -3287,7 +3292,7 @@ utils-merge@1.0.1:
   resolved "https://registry.yarnpkg.com/utils-merge/-/utils-merge-1.0.1.tgz#9f95710f50a267947b2ccc124741c1028427e713"
   integrity sha1-n5VxD1CiZ5R7LMwSR0HBAoQn5xM=
 
-uuid@^3.1.0:
+uuid@^3.1.0, uuid@^3.3.3:
   version "3.3.3"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.3.3.tgz#4568f0216e78760ee1dbf3a4d2cf53e224112866"
   integrity sha512-pW0No1RGHgzlpHJO1nsVrHKpOEIxkGg1xB+v0ZmdNH5OAeAwzAVrCnI2/6Mtx+Uys6iaylxa+D3g4j63IKKjSQ==

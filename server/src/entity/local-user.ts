@@ -10,5 +10,8 @@ export class LocalUser {
   email: string;
 
   @Column()
+  fullName: string;
+
+  @Column()
   passwordHash: string;
 }

@@ -7,4 +7,10 @@ export class ApiUser {
 
   @PrimaryColumn()
   id: string;
+
+  @Column()
+  loggedName: string;
+
+  @Column()
+  loggedEmail: string;
 }

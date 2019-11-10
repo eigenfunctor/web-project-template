@@ -1,12 +1,13 @@
 import { Connection } from "typeorm";
-import { gql, ForbiddenError } from "apollo-server";
-import { ApiUser, Admin } from "../../entity";
+import { gql, ForbiddenError, ApolloError } from "apollo-server";
+import { ApiUser, LocalUser, Admin } from "../../entity";
+import { buildTableQuery } from "../table";
 
 export const typeDefs = gql`
   extend type Query {
     isAdmin(profile: ProfileInput!): Boolean!
 
-    users(params: UsersQueryInput!): [ApiUser!]
+    allUsers(query: TableQueryInput!): ApiUserTable!
   }
 
   extend type Mutation {
@@ -14,46 +15,51 @@ export const typeDefs = gql`
       userProfile: ProfileInput!
       isAdmin: Boolean!
       overrideCode: String
-    ): SetAdminResult!
+    ): Boolean
   }
 
-  input UsersQueryInput {
-    search: String
-    sort: UsersQuerySort
-    skip: Int!
-    limit: Int!
-  }
-
-  enum UsersQuerySort {
-    ASCEND
-    DESCEND
-  }
-
-  type SetAdminResult {
-    success: Boolean!
-    errors: [String!]!
+  type ApiUserTable {
+    header: [ColumnHeader!]!
+    rows: [ApiUser!]!
   }
 `;
+
+const ALL_USERS_HEADER = [
+  { key: "provider", name: "Authorization Provider" },
+  { key: "loggedName", name: "Last Logged Name" },
+  { key: "loggedEmail", name: "Last Logged Email" }
+];
 
 export const resolvers = {
   Query: {
     // Assert if the logged in user is an administrator.
-    async isAdmin(_, { profile }, { db }) {
-      return isAdminHelper(db, profile);
+    async isAdmin(_, { profile }, { db }: { db: Connection }) {
+      return checkIsAdmin(db, profile);
     },
 
     // Return a paginated list of users if the authorized profile belongs to an admin.
-    async users(_, { params }, { db, profile }) {
-      const { search, sort, skip, limit } = params;
-
-      const isAdmin = await isAdminHelper(db, profile);
-
-      if (!isAdmin) {
+    async allUsers(
+      _,
+      { query },
+      { db, profile }: { db: Connection; profile?: any }
+    ) {
+      if (!(await checkIsAdmin(db, profile))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
-      //TODO: return list of users
-      return [];
+      const qb = db.manager.createQueryBuilder(ApiUser, "api_user");
+
+      const filteredQB = buildTableQuery(
+        qb,
+        query,
+        "api_user",
+        ALL_USERS_HEADER.map(h => h.key)
+      );
+
+      return {
+        header: ALL_USERS_HEADER,
+        rows: await filteredQB.getMany()
+      };
     }
   },
   Mutation: {
@@ -66,7 +72,11 @@ export const resolvers = {
      * This should only be used to bootstrap the first
      * administrator into the database.
      */
-    async setAdmin(_, { userProfile, isAdmin, overrideCode }, { db, profile }) {
+    async setAdmin(
+      _,
+      { userProfile, isAdmin, overrideCode },
+      { db, profile }: { db: Connection; profile?: any }
+    ) {
       const override =
         typeof process.env.SET_ADMIN_OVERRIDE_CODE === "string" &&
         process.env.SET_ADMIN_OVERRIDE_CODE === overrideCode;
@@ -78,21 +88,21 @@ their admin status changed to ${isAdmin} using the SET_ADMIN_OVERRIDE_CODE envir
         `);
       }
 
-      if (!(override || (await isAdminHelper(db, profile)))) {
+      if (!(override || (await checkIsAdmin(db, profile)))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
       const user = await db.manager.findOne(ApiUser, userProfile);
 
       if (!user) {
-        return { success: false, errors: ["User not found."] };
+        throw new ApolloError("User profile does match any records.");
       }
 
       let admin = await db.manager.findOne(Admin, { user });
 
       if (!isAdmin) {
-        db.manager.remove(admin);
-        return { success: true, errors: [] };
+        await db.manager.remove(admin);
+        return false;
       }
 
       if (!admin) {
@@ -100,20 +110,27 @@ their admin status changed to ${isAdmin} using the SET_ADMIN_OVERRIDE_CODE envir
         admin.user = user;
       }
 
-      db.manager.save(admin);
+      await db.manager.save(admin);
 
-      return { success: true, errors: [] };
+      return true;
     }
   }
 };
 
-async function isAdminHelper(
+export async function checkIsAdmin(
   db: Connection,
   profile: { id: string; provider: string }
 ): Promise<boolean> {
+  if (!profile) {
+    return false;
+  }
+
   const { provider, id } = profile;
 
-  const admin = await db.manager.findOne(Admin, { user: { provider, id } });
+  const admin = await db.manager
+    .createQueryBuilder(Admin, "admin")
+    .innerJoinAndSelect("admin.user", "user")
+    .where("user.id = :id AND user.provider = :provider", { provider, id });
 
   return !!admin;
 }

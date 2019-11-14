@@ -76,19 +76,7 @@ export const resolvers = {
       __,
       { db, profile }: { db: Connection; profile?: any }
     ) {
-      if (!(profile && profile.id)) {
-        throw new ForbiddenError("Unauthorized.");
-      }
-
-      if (profile.provider && profile.provider !== "local") {
-        return true;
-      }
-
-      const { verified } = await db.manager.findOne(EmailVerification, {
-        user: { id: profile.id }
-      });
-
-      return !!verified;
+      return await isVerifiedHelper(db, profile);
     }
   },
   Mutation: {
@@ -306,3 +294,22 @@ export const resolvers = {
     }
   }
 };
+
+export async function isVerifiedHelper(
+  db: Connection,
+  profile: any
+): Promise<boolean> {
+  if (!(profile && profile.id)) {
+    throw new ForbiddenError("Unauthorized.");
+  }
+
+  if (profile.provider && profile.provider !== "local") {
+    return true;
+  }
+
+  const { verified } = await db.manager.findOne(EmailVerification, {
+    user: { id: profile.id }
+  });
+
+  return !!verified;
+}

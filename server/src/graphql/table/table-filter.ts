@@ -1,4 +1,9 @@
-import { Brackets, SelectQueryBuilder, WhereExpression } from "typeorm";
+import {
+  Connection,
+  Brackets,
+  SelectQueryBuilder,
+  WhereExpression
+} from "typeorm";
 
 import uuid = require("uuid/v4");
 
@@ -8,16 +13,33 @@ const MAX_TABLE_FILTER_CONSTRAINTS =
   parseInt(process.env.MAX_TABLE_FILTER_CONSTRAINTS) || 100;
 
 export function buildTableQuery(
+  db: Connection,
   qb: SelectQueryBuilder<any>,
   query: TableQuery,
-  tableAlias: string,
+  getFilterConditionClause: (
+    qb: SelectQueryBuilder<any>
+  ) => (...arg: any) => SelectQueryBuilder<any>,
+  getConstraintConditionClause: (
+    qb: SelectQueryBuilder<any>
+  ) => (...arg: any) => SelectQueryBuilder<any>,
   allowedColumns: string[]
 ): SelectQueryBuilder<any> {
+  const filteringQB = db.manager
+    .createQueryBuilder()
+    .select()
+    .from(`(${qb.getQuery()})`, "filter_row_alias");
+
   if (!query.filters) {
-    return qb;
+    return filteringQB;
   }
 
-  return processFilters(qb, query.filters, tableAlias, allowedColumns);
+  return processFilters(
+    filteringQB,
+    query.filters,
+    getFilterConditionClause,
+    getConstraintConditionClause,
+    allowedColumns
+  );
 }
 export interface TableQuery {
   sortKey?: string;
@@ -59,7 +81,6 @@ export interface TerminalTypeMap {
 }
 
 export function createTablePredicateTypeMap(
-  tableAlias: string,
   allowedColumns: string[]
 ): TerminalTypeMap {
   return {
@@ -67,42 +88,42 @@ export function createTablePredicateTypeMap(
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" < :value_${id}`
+        query: `"filter_row_alias"."${p.column}" < :value_${id}`
       };
     },
     LTE(p) {
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" <= :value_${id}`
+        query: `"filter_row_alias"."${p.column}" <= :value_${id}`
       };
     },
     GT(p) {
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" > :value_${id}`
+        query: `"filter_row_alias"."${p.column}" > :value_${id}`
       };
     },
     GTE(p) {
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" >= :value_${id}`
+        query: `"filter_row_alias"."${p.column}" >= :value_${id}`
       };
     },
     EQ(p) {
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" = :value_${id}`
+        query: `"filter_row_alias"."${p.column}" = :value_${id}`
       };
     },
     LIKE(p) {
       const id = uuid();
       return {
         paramKey: `value_${id}`,
-        query: `"${tableAlias}"."${p.column}" LIKE :value_${id}`
+        query: `"filter_row_alias"."${p.column}" LIKE :value_${id}`
       };
     }
   };
@@ -111,7 +132,12 @@ export function createTablePredicateTypeMap(
 function processFilters(
   qb: SelectQueryBuilder<any>,
   filters: Filter[],
-  tableAlias: string,
+  getFilterConditionClause: (
+    qb: SelectQueryBuilder<any>
+  ) => (...arg: any) => SelectQueryBuilder<any>,
+  getConstraintConditionClause: (
+    qb: SelectQueryBuilder<any>
+  ) => (...arg: any) => SelectQueryBuilder<any>,
   allowedColumns: string[]
 ): SelectQueryBuilder<any> {
   if (filters.length < 1) {
@@ -124,36 +150,28 @@ function processFilters(
     );
   }
 
-  const [firstFilter, ...restFilters] = filters;
-
-  const firstQuery = processConstraints(
-    qb,
-    firstFilter.constraints,
-    qb => qb.where.bind(qb),
-    tableAlias,
-    allowedColumns
-  );
-
-  function reducer(qb, filter) {
+  function filtersReducer(qb, filter) {
     return processConstraints(
       qb,
       filter.constraints,
-      qb => qb.orWhere.bind(qb),
-      tableAlias,
+      getFilterConditionClause,
+      getConstraintConditionClause,
       allowedColumns
     );
   }
 
-  return restFilters.reduce(reducer, firstQuery);
+  return filters.reduce(filtersReducer, qb);
 }
 
 function processConstraints(
   qb: SelectQueryBuilder<any>,
   constraints: Constraint[],
-  getParentClause: (
+  getFilterConditionClause: (
     qb: SelectQueryBuilder<any>
   ) => (...arg: any) => SelectQueryBuilder<any>,
-  tableAlias: string,
+  getConstraintConditionClause: (
+    qb: SelectQueryBuilder<any>
+  ) => (...arg: any) => SelectQueryBuilder<any>,
   allowedColumns: string[]
 ): SelectQueryBuilder<any> {
   if (constraints.length < 1) {
@@ -166,31 +184,20 @@ function processConstraints(
     );
   }
 
-  const clause = getParentClause(qb);
+  const clause = getFilterConditionClause(qb);
 
   return clause(
     new Brackets(qb => {
-      const [firstConstraint, ...restConstraints] = constraints;
-
-      const firstQuery = processConstraint(
-        qb,
-        firstConstraint,
-        qb => qb.where.bind(qb),
-        tableAlias,
-        allowedColumns
-      );
-
-      function reducer(qb, constraint) {
+      function constraintsReducer(qb, constraint) {
         return processConstraint(
           qb,
           constraint,
-          qb => qb.andWhere.bind(qb),
-          tableAlias,
+          getConstraintConditionClause,
           allowedColumns
         );
       }
 
-      return restConstraints.reduce(reducer, firstQuery);
+      return constraints.reduce(constraintsReducer, qb);
     })
   );
 }
@@ -198,8 +205,7 @@ function processConstraints(
 function processConstraint(
   qb: WhereExpression,
   constraint: Constraint,
-  getParentClause: (qb: WhereExpression) => (...arg: any) => WhereExpression,
-  tableAlias: string,
+  getConditionClause: (qb: WhereExpression) => (...arg: any) => WhereExpression,
   allowedColumns: string[]
 ): WhereExpression {
   if (!allowedColumns.includes(constraint.predicate.column)) {
@@ -209,7 +215,7 @@ is not included in the valid list of columns: ${allowedColumns}
     `);
   }
 
-  const typeMap = createTablePredicateTypeMap(tableAlias, allowedColumns);
+  const typeMap = createTablePredicateTypeMap(allowedColumns);
 
   const translateToSQL =
     typeMap[constraint.predicate.predicateType.toUpperCase()];
@@ -222,7 +228,7 @@ is not included in the valid list of columns: ${allowedColumns}
 
   const predicate: SQLPredicate = translateToSQL(constraint.predicate);
 
-  const clause = getParentClause(qb);
+  const clause = getConditionClause(qb);
 
   return clause(`${constraint.negate ? "NOT " : ""}${predicate.query}`, {
     [predicate.paramKey]: constraint.predicate.value

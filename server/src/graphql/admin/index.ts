@@ -7,7 +7,7 @@ export const typeDefs = gql`
   extend type Query {
     isAdmin(profile: ProfileInput!): Boolean!
 
-    allUsers(query: TableQueryInput!): ApiUserTable!
+    allUsers(query: TableQueryInput!): AllUsersTable!
   }
 
   extend type Mutation {
@@ -18,16 +18,25 @@ export const typeDefs = gql`
     ): Boolean
   }
 
-  type ApiUserTable {
+  type AllUsersTable {
     header: [ColumnHeader!]!
-    rows: [ApiUser!]!
+    rows: [AllUsersRow!]!
+  }
+
+  type AllUsersRow {
+    id: String!
+    provider: String!
+    loggedName: String!
+    loggedEmail: String!
+    isAdmin: Boolean!
   }
 `;
 
 const ALL_USERS_HEADER = [
   { key: "provider", name: "Authorization Provider" },
   { key: "loggedName", name: "Last Logged Name" },
-  { key: "loggedEmail", name: "Last Logged Email" }
+  { key: "loggedEmail", name: "Last Logged Email" },
+  { key: "isAdmin", name: "Administrator" }
 ];
 
 export const resolvers = {
@@ -47,18 +56,36 @@ export const resolvers = {
         throw new ForbiddenError("Unauthorized.");
       }
 
-      const qb = db.manager.createQueryBuilder(ApiUser, "api_user");
+      const qb = db.manager
+        .createQueryBuilder()
+        .select([
+          `api_user.provider AS "provider"`,
+          `api_user.id AS "id"`,
+          `api_user.loggedName AS "loggedName"`,
+          `api_user.loggedEmail AS "loggedEmail"`,
+          `CASE WHEN admin.id IS NULL THEN FALSE ELSE TRUE END AS "isAdmin"`
+        ])
+        .from(ApiUser, "api_user")
+        .leftJoin(
+          Admin,
+          "admin",
+          "admin.user.provider = api_user.provider AND admin.user.id = api_user.id"
+        );
 
-      const filteredQB = buildTableQuery(
+      const filterQB = buildTableQuery(
+        db,
         qb,
         query,
-        "api_user",
+        qb => qb.orWhere.bind(qb),
+        qb => qb.andWhere.bind(qb),
         ALL_USERS_HEADER.map(h => h.key)
       );
 
+      const rows = await db.manager.query(...filterQB.getQueryAndParameters());
+
       return {
         header: ALL_USERS_HEADER,
-        rows: await filteredQB.getMany()
+        rows
       };
     }
   },

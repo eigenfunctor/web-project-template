@@ -5,6 +5,7 @@ import { useAuthCheck } from "../hooks";
 const Login: React.FunctionComponent = () => {
   useAuthCheck({ successRedirect: "/" });
   // TODO: render invalid credentials
+  // TODO: render forgot password
   return (
     <Box py={3} mx="auto" maxWidth={512} px={3}>
       <form method="POST" action="/auth/local">

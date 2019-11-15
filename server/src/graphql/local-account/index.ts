@@ -14,7 +14,7 @@ export const typeDefs = gql`
   extend type Mutation {
     signup(form: SignupForm!, validate: Boolean): SignupResults!
 
-    verifyAccount(verificationID: String!): VerifyAccountResult!
+    verifyAccount(verificationID: String): VerifyAccountResult!
 
     resendVerification(email: String!): Boolean
 
@@ -53,7 +53,7 @@ export const typeDefs = gql`
   }
 
   input PasswordResetForm {
-    resetID: String!
+    resetID: String
     password: String!
     confirmPassword: String!
   }
@@ -240,6 +240,13 @@ export const resolvers = {
           password: []
         }
       };
+
+      if (!form.resetID) {
+        formStatus.success = false;
+        formStatus.inputErrors.resetID.push("Invalid password reset link.");
+
+        return formStatus;
+      }
 
       const reset = await db.manager.findOne(PasswordReset, {
         where: { id: form.resetID },

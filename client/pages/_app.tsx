@@ -1,7 +1,7 @@
 import React from "react";
 import NextApp from "next/app";
 import Head from "next/head";
-import { CssBaseline } from "@material-ui/core";
+import { CssBaseline, Paper } from "@material-ui/core";
 import "isomorphic-fetch";
 
 import Nav from "../components/nav";

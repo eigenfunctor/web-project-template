@@ -24,7 +24,7 @@ export async function sendPasswordResetEmail(
   passwordResetID: string
 ) {
   let linkURL = `${process.env.APP_BASE_URL}`;
-  linkURL += `${process.env.PASSWORD_RESET_BASE_URL || "/password-reset"}`;
+  linkURL += `${process.env.PASSWORD_RESET_BASE_URL || "/password/change"}`;
   linkURL += `?id=${passwordResetID}`;
 
   sendEmail(passwordResetTemplate(email, linkURL));

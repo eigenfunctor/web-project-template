@@ -2,7 +2,7 @@ version: "3"
 
 services:
 
-  proxy:
+  app-proxy:
     image: traefik:2.0
     command:
       #- --log.level=DEBUG
@@ -16,19 +16,21 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
    
-  client-dev:
+  client:
     build:
       context: .
       dockerfile: docker/node-dev/Dockerfile
+    environment:
+      APP_PROXY_URI: http://app-proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.client-dev.entrypoints=web
-      - traefik.http.routers.client-dev.rule=PathPrefix(`/`)
-      - traefik.http.services.client-dev.loadbalancer.server.port=3000
+      - traefik.http.routers.client.entrypoints=web
+      - traefik.http.routers.client.rule=PathPrefix(`/`)
+      - traefik.http.services.client.loadbalancer.server.port=3000
     volumes:
       - ./client:/app
 
-  server-dev:
+  server:
     build:
       context: .
       dockerfile: docker/node-dev/Dockerfile
@@ -38,13 +40,13 @@ services:
       SMTP_HOST: smtp
       SMTP_PORT: 25
       DB_HOST: pg-dev
-      DB_PASSWORD: ${DB_PASSWORD-server-dev-test-password}
+      DB_PASSWORD: ${DB_PASSWORD-server-dev-password}
       DB_NAME: ${DB_NAME-server-dev-db} 
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server-dev.entrypoints=web
-      - traefik.http.routers.server-dev.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`)
-      - traefik.http.services.server-dev.loadbalancer.server.port=3001
+      - traefik.http.routers.server.entrypoints=web
+      - traefik.http.routers.server.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`)
+      - traefik.http.services.server.loadbalancer.server.port=3001
     volumes:
       - ./server:/app
 
@@ -56,5 +58,5 @@ services:
   pg-dev:
     image: postgres:11.5-alpine
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD-server-dev-test-password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD-server-dev-password}
       POSTGRES_DB: ${DB_NAME-server-dev-db}

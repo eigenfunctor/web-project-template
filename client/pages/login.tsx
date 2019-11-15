@@ -1,66 +1,41 @@
 import React from "react";
-import Router from "next/router";
-import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
-import { Box, Flex, Button } from "rebass";
-import { Label, Input } from "@rebass/forms";
+import { Box, Grid, Button, InputLabel, Input } from "@material-ui/core";
+import { useAuthCheck } from "../hooks";
 
 const Login: React.FunctionComponent = () => {
-  const { loading, error, data } = useQuery(gql`
-    query getProfile {
-      profile {
-        id
-      }
-    }
-  `);
-
-  React.useEffect(() => {
-    if (loading) {
-      return;
-    }
-
-    if (data && data.profile) {
-      Router.push("/");
-    }
-  }, [loading, data]);
-
-  if (loading) {
-    return null;
-  }
-
+  useAuthCheck({ successRedirect: "/" });
   // TODO: render invalid credentials
   return (
-    <Box as="form" method="POST" action="/auth/local" py={3}>
-      <input
-        type="hidden"
-        id="successRedirect"
-        name="successRedirect"
-        value="/"
-      />
-      <input
-        type="hidden"
-        id="failureRedirect"
-        name="failureRedirect"
-        value="/login?failure=true"
-      />
-      <Flex
-        flexDirection="column"
-        mx="auto"
-        maxWidth={512}
-        sx={{ px: 3, py: 5 }}
-      >
-        <Box width={1} sx={{ py: 2 }}>
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" />
-        </Box>
-        <Box width={1} sx={{ py: 2 }}>
-          <Label htmlFor="password">Password</Label>
-          <Input type="password" id="password" name="password" />
-        </Box>
-        <Flex flexDirection="row-reverse" sx={{ py: 2 }}>
-          <Button type="submit">Login</Button>
-        </Flex>
-      </Flex>
+    <Box py={3} mx="auto" maxWidth={512} px={3}>
+      <form method="POST" action="/auth/local">
+        <input
+          type="hidden"
+          id="successRedirect"
+          name="successRedirect"
+          value="/"
+        />
+        <input
+          type="hidden"
+          id="failureRedirect"
+          name="failureRedirect"
+          value="/login?failure=true"
+        />
+        <Grid container direction="column">
+          <Box width={1} py={2}>
+            <InputLabel htmlFor="email">Email</InputLabel>
+            <Input fullWidth id="email" name="email" />
+          </Box>
+          <Box width={1} py={2}>
+            <InputLabel htmlFor="password">Password</InputLabel>
+            <Input fullWidth type="password" id="password" name="password" />
+          </Box>
+          <Grid container direction="row-reverse">
+            <Button variant="contained" color="primary" type="submit">
+              Login
+            </Button>
+          </Grid>
+        </Grid>
+      </form>
     </Box>
   );
 };

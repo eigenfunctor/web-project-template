@@ -12,14 +12,6 @@ export function useLocalProvider(db: Connection, parentrouter: Router) {
 
   parentrouter.use("/local", router);
 
-  passport.serializeUser(function(user, done) {
-    done(null, JSON.stringify(user));
-  });
-
-  passport.deserializeUser(function(json: string, done) {
-    done(null, JSON.parse(json));
-  });
-
   passport.use(
     new LocalStrategy(
       {

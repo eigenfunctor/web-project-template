@@ -1,16 +1,16 @@
 import * as R from "ramda";
 import React from "react";
-import { ThemeProvider as EmotionThemeProvider } from "emotion-theming";
-import preset from "@rebass/preset";
+import {
+  createMuiTheme,
+  ThemeProvider as MUIThemeProvider
+} from "@material-ui/core/styles";
 
-const theme = {};
+export const theme = createMuiTheme({
+  // TODO: Customize theme here
+});
 
 const ThemeProvider: React.FunctionComponent = ({ children }) => {
-  return (
-    <EmotionThemeProvider theme={R.mergeDeepLeft(theme, preset)}>
-      {children}
-    </EmotionThemeProvider>
-  );
+  return <MUIThemeProvider theme={theme}>{children}</MUIThemeProvider>;
 };
 
 export default ThemeProvider;

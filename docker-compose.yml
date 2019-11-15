@@ -2,16 +2,18 @@ version: "3"
 
 services:
    
-  client:
-    image: egnf/web-project-template-client
+  client-build:
+    # TODO: Put a custom client image name here.
+    image: egfn/web-project-template-client
     build:
       context: .
       dockerfile: docker/node-prod/Dockerfile
       args:
         DIRECTORY: ./client
 
-  server:
-    image: egnf/web-project-template-server
+  server-build:
+    # TODO: Put a custom server image name here.
+    image: egfn/web-project-template-server
     build:
       context: .
       dockerfile: docker/node-prod/Dockerfile

@@ -1,6 +1,11 @@
 import { Connection } from "typeorm";
 import { gql, UserInputError, ForbiddenError } from "apollo-server";
-import { LocalUser, EmailVerification, PasswordReset } from "../../entity";
+import {
+  ApiUser,
+  LocalUser,
+  EmailVerification,
+  PasswordReset
+} from "../../entity";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../../email";
 
 import argon2 = require("argon2");
@@ -150,6 +155,15 @@ export const resolvers = {
 
       await db.manager.save(user);
       await db.manager.save(verification);
+
+      const apiUser = new ApiUser();
+      apiUser.provider = "local";
+      apiUser.id = user.id;
+
+      apiUser.loggedName = user.fullName;
+      apiUser.loggedEmail = user.email;
+
+      await db.manager.save(apiUser);
 
       sendVerificationEmail(verification.email, verification.id);
 

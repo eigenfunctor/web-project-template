@@ -12,7 +12,7 @@ export const typeDefs = gql`
 
   extend type Mutation {
     setAdmin(
-      userProfile: ProfileInput!
+      profile: ProfileInput!
       isAdmin: Boolean!
       overrideCode: String
     ): Boolean
@@ -21,6 +21,7 @@ export const typeDefs = gql`
   type AllUsersTable {
     header: [ColumnHeader!]!
     rows: [AllUsersRow!]!
+    count: Int!
   }
 
   type AllUsersRow {
@@ -81,11 +82,26 @@ export const resolvers = {
         ALL_USERS_HEADER.map(h => h.key)
       );
 
-      const rows = await db.manager.query(...filterQB.getQueryAndParameters());
+      const countQuery = filterQB
+        .clone()
+        .orderBy()
+        .select(["COUNT(*) AS count"]);
+
+      const counts = await db.manager.query(
+        ...countQuery.getQueryAndParameters()
+      );
+
+      const rows = await db.manager.query(
+        ...filterQB
+          .skip(query.skip)
+          .take(query.limit)
+          .getQueryAndParameters()
+      );
 
       return {
         header: ALL_USERS_HEADER,
-        rows
+        rows,
+        count: counts[0] ? counts[0].count : 0
       };
     }
   },
@@ -101,8 +117,8 @@ export const resolvers = {
      */
     async setAdmin(
       _,
-      { userProfile, isAdmin, overrideCode },
-      { db, profile }: { db: Connection; profile?: any }
+      { profile, isAdmin, overrideCode },
+      { db, profile: sessionProfile }: { db: Connection; profile?: any }
     ) {
       const override =
         typeof process.env.SET_ADMIN_OVERRIDE_CODE === "string" &&
@@ -110,32 +126,51 @@ export const resolvers = {
 
       if (override) {
         console.log(`
-WARNING: User with provider: ${userProfile.provider} and ID: ${userProfile.id} had
+WARNING: User with provider: ${profile.provider} and ID: ${profile.id} is about to have
 their admin status changed to ${isAdmin} using the SET_ADMIN_OVERRIDE_CODE environment variable.
         `);
       }
 
-      if (!(override || (await checkIsAdmin(db, profile)))) {
+      if (!(override || (await checkIsAdmin(db, sessionProfile)))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
-      const user = await db.manager.findOne(ApiUser, userProfile);
+      const user = await db.manager.findOne(ApiUser, profile);
 
       if (!user) {
         throw new ApolloError("User profile does match any records.");
       }
 
-      let admin = await db.manager.findOne(Admin, { user });
+      const adminMatches = await db.manager.query(
+        ...db.manager
+          .createQueryBuilder(Admin, "admin")
+          .where(
+            `"admin"."userProvider" = :provider AND "admin"."userId" = :id`,
+            {
+              provider: user.provider,
+              id: user.id
+            }
+          )
+          .getQueryAndParameters()
+      );
+
+      let admin = adminMatches[0];
+      admin =
+        admin && (await db.manager.findOne(Admin, { id: admin.admin_id }));
 
       if (!isAdmin) {
-        await db.manager.remove(admin);
+        if (admin) {
+          await db.manager.remove(admin);
+        }
+
         return false;
       }
 
       if (!admin) {
         admin = new Admin();
-        admin.user = user;
       }
+
+      admin.user = user;
 
       await db.manager.save(admin);
 
@@ -154,10 +189,13 @@ export async function checkIsAdmin(
 
   const { provider, id } = profile;
 
-  const admin = await db.manager
-    .createQueryBuilder(Admin, "admin")
-    .innerJoinAndSelect("admin.user", "user")
-    .where("user.id = :id AND user.provider = :provider", { provider, id });
+  const result = await db.manager.query(
+    ...db.manager
+      .createQueryBuilder(Admin, "admin")
+      .innerJoinAndSelect(ApiUser, "user", "admin.user")
+      .where("user.id = :id AND user.provider = :provider", { provider, id })
+      .getQueryAndParameters()
+  );
 
-  return !!admin;
+  return result.length > 0;
 }

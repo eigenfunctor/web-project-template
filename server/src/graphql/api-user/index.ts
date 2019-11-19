@@ -9,8 +9,8 @@ export const typeDefs = gql`
   type ApiUser {
     id: String!
     provider: String!
-    loggedName: String!
-    loggedEmail: String!
+    loggedName: String
+    loggedEmail: String
   }
 
   input ProfileInput {

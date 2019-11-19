@@ -3,20 +3,18 @@ import Router from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
-interface AuthCheckProps {
+interface AdminCheckProps {
   successRedirect?: string;
   failureRedirect?: string;
 }
 
-export function useAuthCheck({
+export function useAdminCheck({
   successRedirect,
   failureRedirect
-}: AuthCheckProps) {
+}: AdminCheckProps) {
   const { loading, error, data } = useQuery(gql`
-    query ProfileQuery {
-      profile {
-        id
-      }
+    query IsAdminQuery {
+      isAdmin
     }
   `);
 
@@ -25,7 +23,7 @@ export function useAuthCheck({
       return;
     }
 
-    if (data && data.profile) {
+    if (data && data.isAdmin) {
       if (successRedirect) {
         Router.push(successRedirect);
       }

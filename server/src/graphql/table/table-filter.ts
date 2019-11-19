@@ -24,7 +24,7 @@ export function buildTableQuery(
   ) => (...arg: any) => SelectQueryBuilder<any>,
   allowedColumns: string[]
 ): SelectQueryBuilder<any> {
-  const filteringQB = db.manager
+  let filteringQB = db.manager
     .createQueryBuilder()
     .select()
     .from(`(${qb.getQuery()})`, "filter_row_alias");
@@ -33,23 +33,38 @@ export function buildTableQuery(
     return filteringQB;
   }
 
-  return processFilters(
+  filteringQB = processFilters(
     filteringQB,
     query.filters,
     getFilterConditionClause,
     getConstraintConditionClause,
     allowedColumns
   );
-}
-export interface TableQuery {
-  sortKey?: string;
-  sortDir?: SortDirection;
-  filters?: Filter[];
-  skip: number;
-  limit: number;
+
+  if (query.sortKey && allowedColumns.includes(query.sortKey)) {
+    if (
+      query.sortDir &&
+      !["ASC", "DESC"].includes(query.sortDir.toUpperCase())
+    ) {
+      return filteringQB;
+    }
+
+    filteringQB = filteringQB.orderBy(
+      `"filter_row_alias"."${query.sortKey}"`,
+      <SortDirection>(query.sortDir.toUpperCase() || "ASC")
+    );
+  }
+
+  return filteringQB;
 }
 
-export type SortDirection = "ASCEND" | "DESCEND";
+type SortDirection = "ASC" | "DESC";
+
+export interface TableQuery {
+  sortKey?: string;
+  sortDir?: string;
+  filters?: Filter[];
+}
 
 interface Filter {
   constraints: Constraint[];
@@ -146,7 +161,7 @@ function processFilters(
 
   if (filters.length > MAX_TABLE_FILTERS) {
     throw new Error(
-      `Too many filters. ${MAX_TABLE_FILTERS} < ${filters.length}`
+      `Too many filters. MAX_TABLE_FILTERS = ${MAX_TABLE_FILTERS} < ${filters.length}`
     );
   }
 
@@ -180,7 +195,7 @@ function processConstraints(
 
   if (constraints.length > MAX_TABLE_FILTER_CONSTRAINTS) {
     throw new Error(
-      `Too many constraints in a single filter. ${MAX_TABLE_FILTER_CONSTRAINTS} < ${constraints.length}`
+      `Too many constraints in a single filter. MAX_TABLE_FILTER_CONSTRAINTS = ${MAX_TABLE_FILTER_CONSTRAINTS} < ${constraints.length}`
     );
   }
 

@@ -16,15 +16,10 @@ export const typeDefs = gql`
 
   input TableQueryInput {
     sortKey: String
-    sortDir: SortDirectionEnum
+    sortDir: String
     filters: [TableFilterInput!]
     skip: Int!
     limit: Int!
-  }
-
-  enum SortDirectionEnum {
-    ASCEND
-    DESCEND
   }
 
   input TableFilterInput {
@@ -46,7 +41,7 @@ export const typeDefs = gql`
 export const resolvers = {
   Query: {
     tableFilterPredicates() {
-      return Object.keys(createTablePredicateTypeMap("", []));
+      return Object.keys(createTablePredicateTypeMap([]));
     }
   }
 };

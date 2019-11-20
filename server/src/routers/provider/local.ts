@@ -51,8 +51,8 @@ export function useLocalProvider(db: Connection, parentrouter: Router) {
         done(null, {
           provider: apiUser.provider,
           id: apiUser.id,
-          name: apiUser.loggedName,
-          email: apiUser.loggedEmail
+          loggedName: apiUser.loggedName,
+          loggedEmail: apiUser.loggedEmail
         });
       }
     )

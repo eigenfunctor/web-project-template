@@ -7,7 +7,7 @@ export const typeDefs = gql`
   extend type Query {
     isAdmin(profile: ProfileInput!): Boolean!
 
-    allUsers(query: TableQueryInput!): AllUsersTable!
+    allUsers(query: TableQueryInput!, overrideCode: String): AllUsersTable!
   }
 
   extend type Mutation {
@@ -47,13 +47,17 @@ export const resolvers = {
       return checkIsAdmin(db, profile);
     },
 
-    // Return a paginated list of users if the authorized profile belongs to an admin.
+    // Return a paginated list of users if the session profile belongs to an admin.
     async allUsers(
       _,
-      { query },
+      { query, overrideCode },
       { db, profile }: { db: Connection; profile?: any }
     ) {
-      if (!(await checkIsAdmin(db, profile))) {
+      const override =
+        typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
+        process.env.ADMIN_OVERRIDE_CODE === overrideCode;
+
+      if (!(override || (await checkIsAdmin(db, profile)))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
@@ -109,7 +113,7 @@ export const resolvers = {
     /**
      * Set an ApiUser asscaited to the provider/id pair in
      * the given profile record to the isAdmin parameter.
-     * If the SET_ADMIN_OVERRIDE_CODE is set to some string,
+     * If the ADMIN_OVERRIDE_CODE is set to some string,
      * then passing that string as overrideCode allows the request
      * to succeed without adminstrative rights.
      * This should only be used to bootstrap the first
@@ -121,13 +125,13 @@ export const resolvers = {
       { db, profile: sessionProfile }: { db: Connection; profile?: any }
     ) {
       const override =
-        typeof process.env.SET_ADMIN_OVERRIDE_CODE === "string" &&
-        process.env.SET_ADMIN_OVERRIDE_CODE === overrideCode;
+        typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
+        process.env.ADMIN_OVERRIDE_CODE === overrideCode;
 
       if (override) {
         console.log(`
 WARNING: User with provider: ${profile.provider} and ID: ${profile.id} is about to have
-their admin status changed to ${isAdmin} using the SET_ADMIN_OVERRIDE_CODE environment variable.
+their admin status changed to ${isAdmin} using the ADMIN_OVERRIDE_CODE environment variable.
         `);
       }
 
@@ -154,9 +158,9 @@ their admin status changed to ${isAdmin} using the SET_ADMIN_OVERRIDE_CODE envir
           .getQueryAndParameters()
       );
 
-      let admin = adminMatches[0];
-      admin =
-        admin && (await db.manager.findOne(Admin, { id: admin.admin_id }));
+      let admin =
+        adminMatches[0] &&
+        (await db.manager.findOne(Admin, { id: adminMatches[0].admin_id }));
 
       if (!isAdmin) {
         if (admin) {
@@ -189,11 +193,17 @@ export async function checkIsAdmin(
 
   const { provider, id } = profile;
 
+  if (!(provider && id)) {
+    return false;
+  }
+
   const result = await db.manager.query(
     ...db.manager
       .createQueryBuilder(Admin, "admin")
-      .innerJoinAndSelect(ApiUser, "user", "admin.user")
-      .where("user.id = :id AND user.provider = :provider", { provider, id })
+      .where(`"admin"."userProvider" = :provider AND "admin"."userId" = :id`, {
+        provider,
+        id
+      })
       .getQueryAndParameters()
   );
 

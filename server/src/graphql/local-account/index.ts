@@ -123,7 +123,7 @@ export const resolvers = {
       }
 
       // Fail if given password does not match with the password confirmation.
-      if (!form.password === form.confirmPassword) {
+      if (!(form.password === form.confirmPassword)) {
         formStatus.inputErrors.password.push(
           "Password confirmation is different from password."
         );

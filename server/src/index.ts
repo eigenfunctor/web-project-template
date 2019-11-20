@@ -14,15 +14,15 @@ async function main() {
     const app = express();
     const port = parseInt(process.env.API_SERVER_PORT) || 3001;
 
-    if (typeof process.env.SET_ADMIN_OVERRIDE_CODE !== "undefined") {
+    if (typeof process.env.ADMIN_OVERRIDE_CODE !== "undefined") {
       console.warn(
-        `WARNING: The SET_ADMIN_OVERRIDE_CODE environment variable is set.`
+        `WARNING: The ADMIN_OVERRIDE_CODE environment variable is set.`
       );
       console.warn(
         `WARNING: This means anyone can promote anyone to an admin using this code.`
       );
       console.warn(
-        `WARNING: Unset SET_ADMIN_OVERRIDE_CODE to subdue this warning.`
+        `WARNING: Unset ADMIN_OVERRIDE_CODE to subdue this warning.`
       );
     }
 

@@ -55,6 +55,7 @@ export const resolvers = {
     ) {
       const override =
         typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
+        process.env.ADMIN_OVERRIDE_CODE.length > 0 &&
         process.env.ADMIN_OVERRIDE_CODE === overrideCode;
 
       if (!(override || (await checkIsAdmin(db, profile)))) {
@@ -126,6 +127,7 @@ export const resolvers = {
     ) {
       const override =
         typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
+        process.env.ADMIN_OVERRIDE_CODE.length > 0 &&
         process.env.ADMIN_OVERRIDE_CODE === overrideCode;
 
       if (override) {

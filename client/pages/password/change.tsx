@@ -5,13 +5,16 @@ import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import {
   Box,
+  Card,
+  CardContent,
   Grid,
   Button,
   InputLabel,
   Input,
   Typography
 } from "@material-ui/core";
-import { useForm } from "../../hooks";
+import ErrorList from "../../components/error-list";
+import { FormStatus, useForm } from "../../hooks";
 
 const CHANGE_PASSWORD_MUTATION = gql`
   mutation ChangePasswordMutation(
@@ -43,36 +46,40 @@ const ChangePassword: React.FunctionComponent = () => {
     }
   );
 
-  // TODO: Show errors
-  // TODO: Show loading
-
   return (
-    <Box py={3} mx="auto" maxWidth={512} px={3}>
-      <Box width={1} py={2}>
-        <h2>Change Password</h2>
-      </Box>
-      <form onSubmit={submit}>
-        <Grid container direction="column">
-          <InputField
-            password
-            formKey={"password"}
-            label="Password"
-            {...{ form, setField }}
-          />
-          <InputField
-            password
-            formKey={"confirmPassword"}
-            label="Confirm Password"
-            {...{ form, setField }}
-          />
-          <Grid container direction="row-reverse">
-            <Button variant="contained" color="primary" type="submit">
-              Reset
-            </Button>
+    <Grid container justify="center">
+      <Box py={3} mx="auto" maxWidth={512} px={3}>
+        <Box width={1} py={2}>
+          <h2>Change Password</h2>
+        </Box>
+        <form onSubmit={submit}>
+          <Grid container direction="column">
+            <InputField
+              password
+              formKey={"password"}
+              label="Password"
+              {...{ form, formStatus, setField }}
+            />
+            <InputField
+              password
+              formKey={"confirmPassword"}
+              label="Confirm Password"
+              {...{ form, formStatus, setField }}
+            />
+            <Grid container direction="row-reverse">
+              <Button variant="contained" color="primary" type="submit">
+                Reset
+              </Button>
+            </Grid>
           </Grid>
-        </Grid>
-      </form>
-    </Box>
+        </form>
+        <Card style={{ visibility: loading ? "visible" : "hidden" }}>
+          <CardContent>
+            <h3>Loading...</h3>
+          </CardContent>
+        </Card>
+      </Box>
+    </Grid>
   );
 };
 
@@ -82,6 +89,7 @@ interface InputFieldProps {
   formKey: string;
   label: string;
   form: { [key: string]: any };
+  formStatus: FormStatus;
   setField: (
     key: string
   ) => (
@@ -94,6 +102,7 @@ const InputField: React.FunctionComponent<InputFieldProps> = ({
   formKey,
   label,
   form,
+  formStatus,
   setField,
   password
 }) => {
@@ -108,6 +117,7 @@ const InputField: React.FunctionComponent<InputFieldProps> = ({
         value={form[formKey] || ""}
         onChange={setField(formKey)}
       />
+      <ErrorList errors={formStatus[formKey] || []} />
     </Box>
   );
 };

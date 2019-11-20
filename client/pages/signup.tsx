@@ -5,13 +5,16 @@ import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import {
   Box,
-  Grid,
   Button,
-  InputLabel,
+  Card,
+  CardContent,
+  Grid,
   Input,
+  InputLabel,
   Typography
 } from "@material-ui/core";
-import { useForm, useAuthCheck } from "../hooks";
+import ErrorList from "../components/error-list";
+import { FormStatus, useForm, useAuthCheck } from "../hooks";
 
 const SIGNUP_MUTATION = gql`
   mutation SignupMutation($form: SignupForm!, $validate: Boolean) {
@@ -41,9 +44,6 @@ const Signup: React.FunctionComponent = () => {
     }
   );
 
-  // TODO: Show errors
-  // TODO: Show loading
-
   return (
     <Box py={3} mx="auto" maxWidth={512} px={3}>
       <Box width={1} py={2}>
@@ -51,23 +51,27 @@ const Signup: React.FunctionComponent = () => {
       </Box>
       <form onSubmit={submit}>
         <Grid container direction="column">
-          <InputField formKey={"email"} label="Email" {...{ form, setField }} />
+          <InputField
+            formKey={"email"}
+            label="Email"
+            {...{ form, formStatus, setField }}
+          />
           <InputField
             formKey={"fullName"}
             label="Full Name"
-            {...{ form, setField }}
+            {...{ form, formStatus, setField }}
           />
           <InputField
             password
             formKey={"password"}
             label="Password"
-            {...{ form, setField }}
+            {...{ form, formStatus, setField }}
           />
           <InputField
             password
             formKey={"confirmPassword"}
             label="Confirm Password"
-            {...{ form, setField }}
+            {...{ form, formStatus, setField }}
           />
           <Grid container direction="row-reverse">
             <Button variant="contained" color="primary" type="submit">
@@ -76,6 +80,11 @@ const Signup: React.FunctionComponent = () => {
           </Grid>
         </Grid>
       </form>
+      <Card style={{ visibility: loading ? "visible" : "hidden" }}>
+        <CardContent>
+          <h3>Loading...</h3>
+        </CardContent>
+      </Card>
     </Box>
   );
 };
@@ -86,6 +95,7 @@ interface InputFieldProps {
   formKey: string;
   label: string;
   form: { [key: string]: any };
+  formStatus: FormStatus;
   setField: (
     key: string
   ) => (
@@ -98,9 +108,11 @@ const InputField: React.FunctionComponent<InputFieldProps> = ({
   formKey,
   label,
   form,
+  formStatus,
   setField,
   password
 }) => {
+  console.log(formStatus, formKey);
   return (
     <Box width={1} py={2}>
       <InputLabel htmlFor={`${formKey}--inputfield`}>{label}</InputLabel>
@@ -111,6 +123,9 @@ const InputField: React.FunctionComponent<InputFieldProps> = ({
         name={formKey}
         value={form[formKey] || ""}
         onChange={setField(formKey)}
+      />
+      <ErrorList
+        errors={formStatus ? formStatus.inputErrors[formKey] || [] : []}
       />
     </Box>
   );

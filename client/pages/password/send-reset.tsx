@@ -1,9 +1,11 @@
 import React from "react";
-import Router from "next/router";
+import Router, { useRouter } from "next/router";
 import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import {
   Box,
+  Card,
+  CardContent,
   Grid,
   Button,
   InputLabel,
@@ -18,6 +20,8 @@ const PASSWORD_RESET_MUTATION = gql`
 `;
 
 const PasswordReset: React.FunctionComponent = () => {
+  const { query } = useRouter();
+
   const [email, setEmail] = React.useState("");
 
   const [mutate] = useMutation(PASSWORD_RESET_MUTATION);
@@ -30,37 +34,44 @@ const PasswordReset: React.FunctionComponent = () => {
     Router.push("/password/send-reset?sent=true");
   };
 
-  // TODO: render sent message.
-
   return (
-    <Box py={3} mx="auto" maxWidth={512} px={3}>
-      <Box width={1} py={2}>
-        <h2>Password Reset</h2>
-        <Typography>
-          Please enter the email you registered with to recieve a password reset
-          link.
-        </Typography>
-      </Box>
-      <form onSubmit={submit}>
-        <Grid container direction="column">
-          <Box width={1} py={2}>
-            <InputLabel htmlFor="email">Email</InputLabel>
-            <Input
-              fullWidth
-              id="email"
-              name="email"
-              value={email}
-              onChange={event => setEmail(event.target.value)}
-            />
-          </Box>
-          <Grid container direction="row-reverse">
-            <Button variant="contained" color="primary" type="submit">
-              Send Reset Link
-            </Button>
+    <Grid container justify="center" direction="column">
+      <Box py={3} mx="auto" maxWidth={512} px={3}>
+        {query.sent && (
+          <Card>
+            <CardContent>
+              <Typography variant="h5">Password reset email sent.</Typography>
+            </CardContent>
+          </Card>
+        )}
+        <Box width={1} py={2}>
+          <h2>Password Reset</h2>
+          <Typography>
+            Please enter the email you registered with to recieve a password
+            reset link.
+          </Typography>
+        </Box>
+        <form onSubmit={submit}>
+          <Grid container direction="column">
+            <Box width={1} py={2}>
+              <InputLabel htmlFor="email">Email</InputLabel>
+              <Input
+                fullWidth
+                id="email"
+                name="email"
+                value={email}
+                onChange={event => setEmail(event.target.value)}
+              />
+            </Box>
+            <Grid container direction="row-reverse">
+              <Button variant="contained" color="primary" type="submit">
+                Send Reset Link
+              </Button>
+            </Grid>
           </Grid>
-        </Grid>
-      </form>
-    </Box>
+        </form>
+      </Box>
+    </Grid>
   );
 };
 

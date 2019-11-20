@@ -4,6 +4,8 @@ import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import {
   Box,
+  Card,
+  CardContent,
   Grid,
   Button,
   InputLabel,
@@ -20,7 +22,7 @@ const RESEND_VERIFICATION_MUTATION = gql`
 const Verification: React.FunctionComponent = () => {
   const { query } = useRouter();
 
-  const [email, setEmail] = React.useState();
+  const [email, setEmail] = React.useState("");
 
   const [mutate] = useMutation(RESEND_VERIFICATION_MUTATION);
 
@@ -33,40 +35,47 @@ const Verification: React.FunctionComponent = () => {
 
     await mutate({ variables: { email } });
 
-    Router.push("/verification?sent=true");
+    Router.push("/verification/resend?sent=true");
   };
 
-  // TODO: render sent message.
-
   return (
-    <Box py={3} mx="auto" maxWidth={512} px={3}>
-      <Box width={1} py={2}>
-        <h2>Email Verification</h2>
-        <Typography>
-          Please enter the email you registered with to recieve a new email
-          verification link.
-        </Typography>
-      </Box>
-      <form onSubmit={submit}>
-        <Grid container direction="column">
-          <Box width={1} py={2}>
-            <InputLabel htmlFor="email">Email</InputLabel>
-            <Input
-              fullWidth
-              id="email"
-              name="email"
-              value={email}
-              onChange={event => setEmail(event.target.value)}
-            />
-          </Box>
-          <Grid container direction="row-reverse">
-            <Button variant="contained" color="primary" type="submit">
-              Send Reset Link
-            </Button>
+    <Grid container justify="center" direction="column">
+      <Box py={3} mx="auto" maxWidth={512} px={3}>
+        {query.sent && (
+          <Card>
+            <CardContent>
+              <Typography variant="h5">Verification email sent.</Typography>
+            </CardContent>
+          </Card>
+        )}
+        <Box width={1} py={2}>
+          <h2>Email Verification</h2>
+          <Typography>
+            Please enter the email you registered with to recieve a new email
+            verification link.
+          </Typography>
+        </Box>
+        <form onSubmit={submit}>
+          <Grid container direction="column">
+            <Box width={1} py={2}>
+              <InputLabel htmlFor="email">Email</InputLabel>
+              <Input
+                fullWidth
+                id="email"
+                name="email"
+                value={email}
+                onChange={event => setEmail(event.target.value)}
+              />
+            </Box>
+            <Grid container direction="row-reverse">
+              <Button variant="contained" color="primary" type="submit">
+                Send Reset Link
+              </Button>
+            </Grid>
           </Grid>
-        </Grid>
-      </form>
-    </Box>
+        </form>
+      </Box>
+    </Grid>
   );
 };
 

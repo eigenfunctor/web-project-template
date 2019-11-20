@@ -20,8 +20,8 @@ import gql from "graphql-tag";
 import { useAuthCheck, useAdminCheck } from "../../hooks";
 
 const ALL_USERS_QUERY = gql`
-  query AllUsersQuery($query: TableQueryInput!) {
-    allUsers(query: $query) {
+  query AllUsersQuery($query: TableQueryInput!, $overrideCode: String) {
+    allUsers(query: $query, overrideCode: $overrideCode) {
       header {
         key
         name
@@ -40,7 +40,10 @@ const ALL_USERS_QUERY = gql`
 
 const Users: React.FunctionComponent = () => {
   useAuthCheck({ failureRedirect: "/login" });
-  useAdminCheck({ failureRedirect: "/" });
+
+  const isAdmin = useAdminCheck({ failureRedirect: "/" });
+
+  const { query } = useRouter();
 
   const [limit, setLimit] = React.useState(25);
 
@@ -54,7 +57,7 @@ const Users: React.FunctionComponent = () => {
 
   const [sortDir, setSortDir] = React.useState("asc");
 
-  const query = {
+  const tableQuery = {
     sortKey,
     sortDir,
     filters: [
@@ -88,7 +91,8 @@ const Users: React.FunctionComponent = () => {
   };
 
   const { data, loading, refetch } = useQuery(ALL_USERS_QUERY, {
-    variables: { query }
+    variables: { query: tableQuery, overrideCode: query.override },
+    skip: !isAdmin
   });
 
   if (!data) {

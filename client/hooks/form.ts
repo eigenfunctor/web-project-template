@@ -40,7 +40,9 @@ export function useForm(
     }
   };
 
-  const [mutate, { data: formStatus, loading }] = useMutation(mutation);
+  const [mutate, { data, loading }] = useMutation(mutation);
+
+  const formStatus = data && data[R.keys(data)[0]];
 
   const constants = (options && options.constants) || {};
 
@@ -53,7 +55,7 @@ export function useForm(
       variables: { form: { ...constants, ...form } }
     });
 
-    const formStatus = result && result.data[R.keys(result.data)[0]];
+    const formStatus = result.data && result.data[R.keys(result.data)[0]];
 
     if (formStatus && formStatus.success) {
       if (options && options.successRedirect) {

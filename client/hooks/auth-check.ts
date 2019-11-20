@@ -8,17 +8,18 @@ interface AuthCheckProps {
   failureRedirect?: string;
 }
 
-export function useAuthCheck({
-  successRedirect,
-  failureRedirect
-}: AuthCheckProps) {
-  const { loading, error, data } = useQuery(gql`
+export function useAuthCheck(props?: AuthCheckProps) {
+  const { successRedirect, failureRedirect } = props || {};
+
+  const { loading, data } = useQuery(gql`
     query ProfileQuery {
       profile {
         id
       }
     }
   `);
+
+  const [loggedIn, setLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
     if (loading) {
@@ -29,10 +30,16 @@ export function useAuthCheck({
       if (successRedirect) {
         Router.push(successRedirect);
       }
+
+      setLoggedIn(true);
     } else {
       if (failureRedirect) {
         Router.push(failureRedirect);
       }
+
+      setLoggedIn(false);
     }
   }, [loading, data]);
+
+  return loggedIn;
 }

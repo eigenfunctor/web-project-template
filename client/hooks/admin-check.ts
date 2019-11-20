@@ -1,5 +1,6 @@
 import React from "react";
-import Router from "next/router";
+import { useDebounce } from "react-use";
+import Router, { useRouter } from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -8,29 +9,53 @@ interface AdminCheckProps {
   failureRedirect?: string;
 }
 
-export function useAdminCheck({
-  successRedirect,
-  failureRedirect
-}: AdminCheckProps) {
-  const { loading, error, data } = useQuery(gql`
-    query IsAdminQuery {
-      isAdmin
+export function useAdminCheck(props?: AdminCheckProps): boolean {
+  const { successRedirect, failureRedirect } = props || {};
+
+  const { query } = useRouter();
+
+  const { data: profileData } = useQuery(gql`
+    query ProfileQuery {
+      profile {
+        id
+        provider
+      }
     }
   `);
 
-  React.useEffect(() => {
-    if (loading) {
-      return;
+  const { data: isAdminData } = useQuery(
+    gql`
+      query AdminCheckIsAdminQuery($profile: ProfileInput!) {
+        isAdmin(profile: $profile)
+      }
+    `,
+    {
+      skip: !(profileData && profileData.profile),
+      variables: {
+        profile: profileData &&
+          profileData.profile && {
+            provider: profileData.profile.provider,
+            id: profileData.profile.id
+          }
+      }
     }
+  );
 
-    if (data && data.isAdmin) {
-      if (successRedirect) {
-        Router.push(successRedirect);
+  useDebounce(
+    () => {
+      if (query.override || (isAdminData && isAdminData.isAdmin)) {
+        if (successRedirect) {
+          Router.push(successRedirect);
+        }
+      } else {
+        if (failureRedirect) {
+          Router.push(failureRedirect);
+        }
       }
-    } else {
-      if (failureRedirect) {
-        Router.push(failureRedirect);
-      }
-    }
-  }, [loading, data]);
+    },
+    1000,
+    [query.override, isAdminData]
+  );
+
+  return !!query.override || !!(isAdminData && isAdminData.isAdmin);
 }

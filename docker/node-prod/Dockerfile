@@ -8,6 +8,8 @@ COPY $DIRECTORY /app
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 RUN yarn install && yarn build
 
 CMD yarn start

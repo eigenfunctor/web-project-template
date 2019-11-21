@@ -1,6 +1,7 @@
 import { Connection } from "typeorm";
 import { gql, UserInputError, ForbiddenError } from "apollo-server";
 import {
+  Admin,
   ApiUser,
   LocalUser,
   EmailVerification,
@@ -142,30 +143,32 @@ export const resolvers = {
 
       // Save the user to the database and send a verification email.
 
-      const user = new LocalUser();
+      await db.transaction(async tx => {
+        const user = new LocalUser();
 
-      user.email = form.email;
-      user.fullName = form.fullName;
-      user.passwordHash = await argon2.hash(form.password);
+        user.email = form.email;
+        user.fullName = form.fullName;
+        user.passwordHash = await argon2.hash(form.password);
 
-      const verification = new EmailVerification();
-      verification.user = user;
-      verification.email = user.email;
-      verification.verified = false;
+        const verification = new EmailVerification();
+        verification.user = user;
+        verification.email = user.email;
+        verification.verified = false;
 
-      await db.manager.save(user);
-      await db.manager.save(verification);
+        await tx.save(user);
+        await tx.save(verification);
 
-      const apiUser = new ApiUser();
-      apiUser.provider = "local";
-      apiUser.id = user.id;
+        const apiUser = new ApiUser();
+        apiUser.provider = "local";
+        apiUser.id = user.id;
 
-      apiUser.loggedName = user.fullName;
-      apiUser.loggedEmail = user.email;
+        apiUser.loggedName = user.fullName;
+        apiUser.loggedEmail = user.email;
 
-      await db.manager.save(apiUser);
+        await tx.save(apiUser);
 
-      sendVerificationEmail(verification.email, verification.id);
+        sendVerificationEmail(verification.email, verification.id);
+      });
 
       return formStatus;
     },
@@ -200,25 +203,27 @@ export const resolvers = {
         return;
       }
 
-      let verification = await db.manager.findOne(EmailVerification, { user });
+      await db.transaction(async tx => {
+        let verification = await tx.findOne(EmailVerification, { user });
 
-      if (verification) {
-        // If there is no pending verification for the registered user, create a new one.
-        if (verification.verified) {
-          return;
+        if (verification) {
+          // If there is no pending verification for the registered user, create a new one.
+          if (verification.verified) {
+            return;
+          }
+
+          await tx.remove(verification);
         }
 
-        await db.manager.remove(verification);
-      }
+        verification = new EmailVerification();
+        verification.user = user;
+        verification.email = user.email;
+        verification.verified = false;
 
-      verification = new EmailVerification();
-      verification.user = user;
-      verification.email = user.email;
-      verification.verified = false;
+        await tx.save(verification);
 
-      await db.manager.save(verification);
-
-      await sendVerificationEmail(verification.email, verification.id);
+        await sendVerificationEmail(verification.email, verification.id);
+      });
     },
 
     // Send a password reset link to the email of a locally registered user or fail silently if no user is found.
@@ -333,4 +338,67 @@ export async function isVerifiedHelper(
   });
 
   return !!verified;
+}
+
+export async function updateRootAccount(db: Connection) {
+  await db.transaction(async tx => {
+    let rootAccount = await tx.findOne(LocalUser, { email: "root" });
+
+    if (!rootAccount) {
+      rootAccount = new LocalUser();
+    }
+
+    rootAccount.fullName = "root";
+    rootAccount.email = "root";
+    rootAccount.passwordHash = await argon2.hash(
+      process.env.ROOT_PASSWORD && process.env.ROOT_PASSWORD.length > 0
+        ? process.env.ROOT_PASSWORD
+        : "root"
+    );
+    console.log(
+      process.env.ROOT_PASSWORD && process.env.ROOT_PASSWORD.length > 0
+        ? process.env.ROOT_PASSWORD
+        : "root"
+    );
+
+    await tx.save(rootAccount);
+
+    let apiUser = await tx.findOne(ApiUser, {
+      provider: "local",
+      id: rootAccount.id
+    });
+
+    if (!apiUser) {
+      apiUser = new ApiUser();
+    }
+
+    apiUser.provider = "local";
+    apiUser.id = rootAccount.id;
+
+    apiUser.loggedName = rootAccount.fullName;
+    apiUser.loggedEmail = rootAccount.email;
+
+    await tx.save(apiUser);
+
+    const adminMatches = await tx.query(
+      ...tx
+        .createQueryBuilder(Admin, "admin")
+        .where(
+          `"admin"."userProvider" = :provider AND "admin"."userId" = :id`,
+          { provider: apiUser.provider, id: apiUser.id }
+        )
+        .getQueryAndParameters()
+    );
+
+    let admin =
+      adminMatches[0] &&
+      (await tx.findOne(Admin, { id: adminMatches[0].admin_id }));
+
+    if (!admin) {
+      admin = new Admin();
+      admin.user = apiUser;
+    }
+
+    await tx.save(admin);
+  });
 }

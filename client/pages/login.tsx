@@ -57,7 +57,7 @@ const Login: React.FunctionComponent = () => {
             <Box>
               <Box>
                 <Link href="/password/send-reset">
-                  <a>Forgot password.</a>
+                  <a>Reset my password.</a>
                 </Link>
               </Box>
               <Box py={[1]}>

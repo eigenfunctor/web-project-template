@@ -1,27 +1,23 @@
 import { Connection } from "typeorm";
 import { gql, ForbiddenError, ApolloError } from "apollo-server";
 import { ApiUser, LocalUser, Admin } from "../../entity";
-import { buildTableQuery } from "../table";
+import { runTableQuery } from "../table";
 
 export const typeDefs = gql`
   extend type Query {
     isAdmin(profile: ProfileInput!): Boolean!
 
-    allUsers(query: TableQueryInput!, overrideCode: String): AllUsersTable!
+    allUsers(query: TableQueryInput!): AllUsersTable!
   }
 
   extend type Mutation {
-    setAdmin(
-      profile: ProfileInput!
-      isAdmin: Boolean!
-      overrideCode: String
-    ): Boolean
+    setAdmin(profile: ProfileInput!, isAdmin: Boolean!): Boolean
   }
 
   type AllUsersTable {
     header: [ColumnHeader!]!
     rows: [AllUsersRow!]!
-    count: Int!
+    count: Int
   }
 
   type AllUsersRow {
@@ -50,15 +46,10 @@ export const resolvers = {
     // Return a paginated list of users if the session profile belongs to an admin.
     async allUsers(
       _,
-      { query, overrideCode },
+      { query },
       { db, profile }: { db: Connection; profile?: any }
     ) {
-      const override =
-        typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
-        process.env.ADMIN_OVERRIDE_CODE.length > 0 &&
-        process.env.ADMIN_OVERRIDE_CODE === overrideCode;
-
-      if (!(override || (await checkIsAdmin(db, profile)))) {
+      if (!(await checkIsAdmin(db, profile))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
@@ -78,7 +69,7 @@ export const resolvers = {
           "admin.user.provider = api_user.provider AND admin.user.id = api_user.id"
         );
 
-      const filterQB = buildTableQuery(
+      const { rows, count } = await runTableQuery(
         db,
         qb,
         query,
@@ -87,100 +78,78 @@ export const resolvers = {
         ALL_USERS_HEADER.map(h => h.key)
       );
 
-      const countQuery = filterQB
-        .clone()
-        .orderBy()
-        .select(["COUNT(*) AS count"]);
-
-      const counts = await db.manager.query(
-        ...countQuery.getQueryAndParameters()
-      );
-
-      const rows = await db.manager.query(
-        ...filterQB
-          .skip(query.skip)
-          .take(query.limit)
-          .getQueryAndParameters()
-      );
-
       return {
         header: ALL_USERS_HEADER,
         rows,
-        count: counts[0] ? counts[0].count : 0
+        count
       };
     }
   },
   Mutation: {
-    /**
-     * Set an ApiUser asscaited to the provider/id pair in
-     * the given profile record to the isAdmin parameter.
-     * If the ADMIN_OVERRIDE_CODE is set to some string,
-     * then passing that string as overrideCode allows the request
-     * to succeed without adminstrative rights.
-     * This should only be used to bootstrap the first
-     * administrator into the database.
-     */
+    // Set an ApiUser asscaited to the provider/id pair in the given profile record to the isAdmin parameter.
     async setAdmin(
       _,
-      { profile, isAdmin, overrideCode },
+      { profile, isAdmin },
       { db, profile: sessionProfile }: { db: Connection; profile?: any }
     ) {
-      const override =
-        typeof process.env.ADMIN_OVERRIDE_CODE === "string" &&
-        process.env.ADMIN_OVERRIDE_CODE.length > 0 &&
-        process.env.ADMIN_OVERRIDE_CODE === overrideCode;
-
-      if (override) {
-        console.log(`
-WARNING: User with provider: ${profile.provider} and ID: ${profile.id} is about to have
-their admin status changed to ${isAdmin} using the ADMIN_OVERRIDE_CODE environment variable.
-        `);
-      }
-
-      if (!(override || (await checkIsAdmin(db, sessionProfile)))) {
+      if (!(await checkIsAdmin(db, sessionProfile))) {
         throw new ForbiddenError("Unauthorized.");
       }
 
-      const user = await db.manager.findOne(ApiUser, profile);
+      const localUser =
+        profile.provider === "local" &&
+        (await db.manager.findOne(LocalUser, { id: profile.id }));
 
-      if (!user) {
-        throw new ApolloError("User profile does match any records.");
+      if (localUser && localUser.email === "root") {
+        throw new ForbiddenError("Unauthorized.");
       }
 
-      const adminMatches = await db.manager.query(
-        ...db.manager
-          .createQueryBuilder(Admin, "admin")
-          .where(
-            `"admin"."userProvider" = :provider AND "admin"."userId" = :id`,
-            {
-              provider: user.provider,
-              id: user.id
-            }
-          )
-          .getQueryAndParameters()
-      );
+      let adminStatus = false;
+      await db.transaction(async tx => {
+        const user = await tx.findOne(ApiUser, profile);
 
-      let admin =
-        adminMatches[0] &&
-        (await db.manager.findOne(Admin, { id: adminMatches[0].admin_id }));
-
-      if (!isAdmin) {
-        if (admin) {
-          await db.manager.remove(admin);
+        if (!user) {
+          throw new ApolloError("User profile does match any records.");
         }
 
-        return false;
-      }
+        const adminMatches = await tx.query(
+          ...tx
+            .createQueryBuilder(Admin, "admin")
+            .where(
+              `"admin"."userProvider" = :provider AND "admin"."userId" = :id`,
+              {
+                provider: user.provider,
+                id: user.id
+              }
+            )
+            .getQueryAndParameters()
+        );
 
-      if (!admin) {
-        admin = new Admin();
-      }
+        let admin =
+          adminMatches[0] &&
+          (await tx.findOne(Admin, { id: adminMatches[0].admin_id }));
 
-      admin.user = user;
+        if (!isAdmin) {
+          if (admin) {
+            await tx.remove(admin);
+          }
 
-      await db.manager.save(admin);
+          adminStatus = false;
+          return;
+        }
 
-      return true;
+        if (!admin) {
+          admin = new Admin();
+        }
+
+        admin.user = user;
+
+        await tx.save(admin);
+
+        adminStatus = true;
+      });
+
+      return adminStatus;
     }
   }
 };

@@ -26,6 +26,10 @@ export async function sendEmail(params: {
 
   const { email, subject, text, html } = params;
 
+  if (!/^.+\@.+$/g.test(email)) {
+    return;
+  }
+
   return await transporter.sendMail({
     from: `"NO REPLY" <noreply@${process.env.EMAIL_DOMAIN || "localhost"}>`,
     to: email,

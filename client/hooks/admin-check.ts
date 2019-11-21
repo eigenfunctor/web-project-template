@@ -1,6 +1,6 @@
 import React from "react";
 import { useDebounce } from "react-use";
-import Router, { useRouter } from "next/router";
+import Router from "next/router";
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 
@@ -11,8 +11,6 @@ interface AdminCheckProps {
 
 export function useAdminCheck(props?: AdminCheckProps): boolean {
   const { successRedirect, failureRedirect } = props || {};
-
-  const { query } = useRouter();
 
   const { data: profileData } = useQuery(gql`
     query ProfileQuery {
@@ -43,7 +41,7 @@ export function useAdminCheck(props?: AdminCheckProps): boolean {
 
   useDebounce(
     () => {
-      if (query.override || (isAdminData && isAdminData.isAdmin)) {
+      if (isAdminData && isAdminData.isAdmin) {
         if (successRedirect) {
           Router.push(successRedirect);
         }
@@ -54,8 +52,8 @@ export function useAdminCheck(props?: AdminCheckProps): boolean {
       }
     },
     1000,
-    [query.override, isAdminData]
+    [isAdminData]
   );
 
-  return !!query.override || !!(isAdminData && isAdminData.isAdmin);
+  return !!(isAdminData && isAdminData.isAdmin);
 }

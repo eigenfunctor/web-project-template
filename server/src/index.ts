@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { createConnection } from "typeorm";
 import useRouters from "./routers";
 import createGraphqlServer from "./graphql";
+import { updateRootAccount } from "./graphql/local-account";
 
 import express = require("express");
 import session = require("express-session");
@@ -14,15 +15,17 @@ async function main() {
     const app = express();
     const port = parseInt(process.env.API_SERVER_PORT) || 3001;
 
-    if (typeof process.env.ADMIN_OVERRIDE_CODE !== "undefined") {
+    await updateRootAccount(db);
+
+    if (process.env.ENABLE_ROOT_ACCOUNT === "1") {
       console.warn(
-        `WARNING: The ADMIN_OVERRIDE_CODE environment variable is set.`
+        `WARNING: The ENABLE_ROOT_ACCOUNT environment variable is set.`
       );
       console.warn(
-        `WARNING: This means anyone can promote anyone to an admin using this code.`
+        `WARNING: This means anyone can login to an administrator account using the password set by the ROOT_PASSWORD environment variable or "root" by default.`
       );
       console.warn(
-        `WARNING: Unset ADMIN_OVERRIDE_CODE to subdue this warning.`
+        `WARNING: Unset ENABLE_ROOT_ACCOUNT to subdue this warning.`
       );
     }
 

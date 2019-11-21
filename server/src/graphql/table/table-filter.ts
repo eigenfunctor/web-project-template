@@ -12,7 +12,7 @@ const MAX_TABLE_FILTERS = parseInt(process.env.MAX_TABLE_FILTERS) || 100;
 const MAX_TABLE_FILTER_CONSTRAINTS =
   parseInt(process.env.MAX_TABLE_FILTER_CONSTRAINTS) || 100;
 
-export function buildTableQuery(
+export async function runTableQuery(
   db: Connection,
   qb: SelectQueryBuilder<any>,
   query: TableQuery,
@@ -23,39 +23,52 @@ export function buildTableQuery(
     qb: SelectQueryBuilder<any>
   ) => (...arg: any) => SelectQueryBuilder<any>,
   allowedColumns: string[]
-): SelectQueryBuilder<any> {
+): Promise<{ rows: any[]; count?: number }> {
   let filteringQB = db.manager
     .createQueryBuilder()
     .select()
     .from(`(${qb.getQuery()})`, "filter_row_alias");
 
-  if (!query.filters) {
-    return filteringQB;
+  if (query.filters) {
+    filteringQB = processFilters(
+      filteringQB,
+      query.filters,
+      getFilterConditionClause,
+      getConstraintConditionClause,
+      allowedColumns
+    );
   }
 
-  filteringQB = processFilters(
-    filteringQB,
-    query.filters,
-    getFilterConditionClause,
-    getConstraintConditionClause,
-    allowedColumns
-  );
-
   if (query.sortKey && allowedColumns.includes(query.sortKey)) {
+    let sortDir = "ASC";
     if (
       query.sortDir &&
-      !["ASC", "DESC"].includes(query.sortDir.toUpperCase())
+      ["ASC", "DESC"].includes(query.sortDir.toUpperCase())
     ) {
-      return filteringQB;
+      sortDir = query.sortDir.toUpperCase();
     }
 
     filteringQB = filteringQB.orderBy(
       `"filter_row_alias"."${query.sortKey}"`,
-      <SortDirection>(query.sortDir.toUpperCase() || "ASC")
+      <SortDirection>sortDir
     );
   }
 
-  return filteringQB;
+  const countQuery = filteringQB
+    .clone()
+    .orderBy()
+    .select(["COUNT(*) AS count"]);
+
+  const counts = await db.manager.query(...countQuery.getQueryAndParameters());
+
+  const rows = await db.manager.query(
+    ...filteringQB
+      .skip(query.skip)
+      .take(query.limit)
+      .getQueryAndParameters()
+  );
+
+  return { rows, count: counts[0] && counts[0].count };
 }
 
 type SortDirection = "ASC" | "DESC";
@@ -64,6 +77,8 @@ export interface TableQuery {
   sortKey?: string;
   sortDir?: string;
   filters?: Filter[];
+  skip: number;
+  limit: number;
 }
 
 interface Filter {

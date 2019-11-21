@@ -34,6 +34,6 @@
    "scripts": {
       "build": "echo 'Nothing to build.'",
       "dev": "NODE_ENV=development nodemon",
-      "start": "NODE_ENV=production nodemon"
+      "start": "nodemon"
    }
 }

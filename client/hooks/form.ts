@@ -17,10 +17,14 @@ export interface UseFormResults {
   loading: boolean;
   form: { [key: string]: any };
   formStatus: FormStatus;
-  setField: (key: string) => (event?: FieldEvent) => void;
+  setField: (key: string) => (eventOrValue?: FieldEvent) => void;
 }
 
-type FieldEvent = React.SyntheticEvent<HTMLInputElement | HTMLTextAreaElement>;
+// This type is just to make it clear that the
+// setField eventOrValue argument has special treatment if it is an event.
+type FieldEvent =
+  | React.SyntheticEvent<HTMLInputElement | HTMLTextAreaElement>
+  | any;
 
 export interface UseFormOptions {
   successRedirect?: string;
@@ -28,15 +32,23 @@ export interface UseFormOptions {
   constants?: { [key: string]: any };
 }
 
+const FORM_DEBOUNCE_TIME_MS = 500;
+
 export function useForm(
   mutation: DocumentNode,
   options?: UseFormOptions
 ): UseFormResults {
   const [form, setForm] = React.useState({});
 
-  const setField = key => event => {
-    if (key && event) {
-      setForm(R.assoc(key, event.target.value, form));
+  const setField = key => eventOrValue => {
+    if (key && eventOrValue) {
+      setForm(
+        R.assoc(
+          key,
+          eventOrValue.target ? eventOrValue.target.value : eventOrValue,
+          form
+        )
+      );
     }
   };
 
@@ -76,7 +88,7 @@ export function useForm(
         variables: { form: { ...constants, ...form }, validate: true }
       });
     },
-    1000,
+    FORM_DEBOUNCE_TIME_MS,
     [form]
   );
 

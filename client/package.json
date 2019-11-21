@@ -39,8 +39,8 @@
     "webpack": "^4.0.0"
   },
   "scripts": {
-    "build": "NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 next build",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
     "dev": "NODE_ENV=development NEXT_TELEMETRY_DISABLED=1 next dev",
-    "start": "NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 next start"
+    "start": "NEXT_TELEMETRY_DISABLED=1 next start"
   }
 }

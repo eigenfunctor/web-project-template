@@ -35,7 +35,8 @@ services:
       context: .
       dockerfile: docker/node-dev/Dockerfile
     environment:
-      ADMIN_OVERRIDE_CODE: ${ADMIN_OVERRIDE_CODE}
+      ENABLE_ROOT_ACCOUNT: ${ENABLE_ROOT_ACCOUNT}
+      ROOT_PASSWORD: ${ROOT_PASSWORD}
       APP_BASE_URL: http://localhost:${DEV_HTTP_PORT-3000}
       SMTP_HOST: smtp
       SMTP_PORT: 25

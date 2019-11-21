@@ -19,17 +19,22 @@ export function useLocalProvider(db: Connection, parentrouter: Router) {
         passwordField: "password"
       },
       async function(email, password, done) {
+        // Fail if the user is trying to access the root account while ENABLE_ROOT_ACCOUNT is not set to "1".
+        if (email === "root" && process.env.ENABLE_ROOT_ACCOUNT !== "1") {
+          console.warn(`WARNING: Unauthorized login attempt to root account.`);
+          return done(null, false);
+        }
+
         const user = await db.manager.findOne(LocalUser, { email });
 
         // Fail if user does not exist or password hash is not populated.
         if (!user || !user.passwordHash) {
-          done(null, false);
-          return;
+          return done(null, false);
         }
 
         // Fail if password verification fails.
         if (!(await argon2.verify(user.passwordHash, password))) {
-          done(null, false);
+          return done(null, false);
         }
 
         let apiUser = await db.manager.findOne(ApiUser, {
@@ -48,7 +53,7 @@ export function useLocalProvider(db: Connection, parentrouter: Router) {
 
         await db.manager.save(apiUser);
 
-        done(null, {
+        return done(null, {
           provider: apiUser.provider,
           id: apiUser.id,
           loggedName: apiUser.loggedName,

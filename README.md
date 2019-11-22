@@ -1,5 +1,13 @@
 # Web Project Template
 
+## TL;DR
+
+- Use `docker-compose -f dev.yml up` to start the development environment.
+- Visit `http://localhost:3000`
+- Add `ENABLE_ROOT_ACCOUNT=1` and `ROOT_PASSWORD=mypassword` to the `.env` file in the root directory of the project to enable the root account and update its password.
+- Edit the client and server image names in `docker-compose.yml`
+- Run `docker-compose build` to build the production images.
+
 ## Introduction
 
 This repository is a template for containerized client/server applications written in typescript. This README will walk you through each component of the template so you may customize your application accordingly.

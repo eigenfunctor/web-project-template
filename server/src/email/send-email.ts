@@ -2,7 +2,8 @@ import { createTransport, Transporter } from "nodemailer";
 
 export function createEmailTransport() {
   if (!process.env.SMTP_HOST) {
-    throw new Error("Please set the SMTP_HOST environment variable.");
+    console.warn("WARNING: Please set the SMTP_HOST environment variable.");
+    return;
   }
 
   return createTransport({
@@ -19,7 +20,8 @@ export async function sendEmail(params: {
   html: string;
 }) {
   if (!process.env.APP_BASE_URL) {
-    throw new Error("Please set the APP_BASE_URL environment variable.");
+    console.warn("WARNING: Please set the APP_BASE_URL environment variable.");
+    return;
   }
 
   const transporter = createEmailTransport();

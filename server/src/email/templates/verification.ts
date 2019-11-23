@@ -24,7 +24,7 @@ export async function sendVerificationEmail(
   verificationID: string
 ) {
   let linkURL = `${process.env.APP_BASE_URL}`;
-  linkURL += `${process.env.VERIFCATION_PATH || "/verification"}`;
+  linkURL += `${process.env.VERIFCATION_PATH || "/accounts/verification"}`;
   linkURL += `?id=${verificationID}`;
 
   sendEmail(verificationTemplate(email, linkURL));

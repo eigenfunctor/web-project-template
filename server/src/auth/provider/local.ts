@@ -7,10 +7,10 @@ import express = require("express");
 import passport = require("passport");
 import LocalStrategy = require("passport-local");
 
-export function useLocalProvider(db: Connection, parentrouter: Router) {
+export function useLocalProvider(db: Connection, parentRouter: Router) {
   const router = express.Router();
 
-  parentrouter.use("/local", router);
+  parentRouter.use("/local", router);
 
   passport.use(
     new LocalStrategy(

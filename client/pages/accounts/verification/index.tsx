@@ -37,7 +37,7 @@ const Verification: React.FunctionComponent = () => {
 
   React.useEffect(() => {
     if (data && data.verifyAccount && data.verifyAccount.success) {
-      Router.push("/login");
+      Router.push("/accounts/login");
     }
   }, [data && data.verifyAccount]);
 

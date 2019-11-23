@@ -3,8 +3,8 @@ import { useDebounce } from "react-use";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import { Select } from "@material-ui/core";
-import { useAuthCheck, useAdminCheck, useTableState } from "../../hooks";
-import Table, { CellProps } from "../../components/table";
+import { useAuthCheck, useAdminCheck, useTableState } from "../../../hooks";
+import Table, { CellProps } from "../../../components/table";
 
 const ALL_USERS_QUERY = gql`
   query AllUsersQuery($query: TableQueryInput!) {
@@ -26,7 +26,7 @@ const ALL_USERS_QUERY = gql`
 `;
 
 const Users: React.FunctionComponent = () => {
-  useAuthCheck({ failureRedirect: "/login" });
+  useAuthCheck({ failureRedirect: "/accounts/login" });
 
   const isAdmin = useAdminCheck({ failureRedirect: "/" });
 

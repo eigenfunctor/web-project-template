@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import { createConnection } from "typeorm";
-import useRouters from "./routers";
+import useAuthRoutes from "./auth";
 import createGraphqlServer from "./graphql";
-import { updateRootAccount } from "./graphql/local-account";
+import { updateRootAccount } from "./graphql/accounts/local-account";
 
 import express = require("express");
 import session = require("express-session");
@@ -45,7 +45,7 @@ async function main() {
     app.use(bodyParser.urlencoded({ extended: true }));
     app.use(bodyParser.json());
 
-    useRouters(db, app);
+    useAuthRoutes(db, app);
 
     createGraphqlServer(db).applyMiddleware({ app });
 

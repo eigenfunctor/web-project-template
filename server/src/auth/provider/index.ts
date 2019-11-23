@@ -1,12 +1,15 @@
 import { Connection } from "typeorm";
 import { Router } from "express";
 import { useLocalProvider } from "./local";
+import { useGoogleProvider } from "./google-oauth20";
 
 import express = require("express");
 import passport = require("passport");
 
-export function useAuthRoutes(db: Connection, parentRouter: Router) {
+export function useAuthProviderRoutes(db: Connection, parentRouter: Router) {
   const router = express.Router();
+
+  parentRouter.use("/provider", router);
 
   passport.serializeUser(function(user, done) {
     done(null, JSON.stringify(user));
@@ -16,12 +19,9 @@ export function useAuthRoutes(db: Connection, parentRouter: Router) {
     done(null, JSON.parse(json));
   });
 
-  parentRouter.use("/auth", router);
-
   useLocalProvider(db, router);
 
-  router.get("/logout", async (req, res) => {
-    req.logout();
-    res.redirect("/");
-  });
+  // useGoogleProvider(db, router);
+
+  // TODO: Add more providers here.
 }

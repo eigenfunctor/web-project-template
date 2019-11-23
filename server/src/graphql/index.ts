@@ -1,9 +1,9 @@
 import { gql } from "apollo-server";
 import { ApolloServer } from "apollo-server-express";
 import { Connection } from "typeorm";
-import * as admin from "./admin";
-import * as apiUser from "./api-user";
-import * as localAccount from "./local-account";
+import * as admin from "./accounts/admin";
+import * as apiUser from "./accounts/api-user";
+import * as localAccount from "./accounts/local-account";
 import * as table from "./table";
 import * as json from "./json";
 

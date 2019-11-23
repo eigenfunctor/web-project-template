@@ -1,7 +1,7 @@
 import { Connection } from "typeorm";
 import { gql, ForbiddenError, ApolloError } from "apollo-server";
-import { ApiUser, LocalUser, Admin } from "../../entity";
-import { runTableQuery } from "../table";
+import { ApiUser, LocalUser, Admin } from "../../../entity";
+import { runTableQuery } from "../../table";
 
 export const typeDefs = gql`
   extend type Query {
@@ -23,8 +23,8 @@ export const typeDefs = gql`
   type AllUsersRow {
     id: String!
     provider: String!
-    loggedName: String!
-    loggedEmail: String!
+    loggedName: String
+    loggedEmail: String
     isAdmin: Boolean!
   }
 `;

@@ -31,7 +31,7 @@ const PasswordReset: React.FunctionComponent = () => {
 
     await mutate({ variables: { email } });
 
-    Router.push("/password/send-reset?sent=true");
+    Router.push("/accounts/password/send-reset?sent=true");
   };
 
   return (

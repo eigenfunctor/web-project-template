@@ -35,7 +35,7 @@ const Verification: React.FunctionComponent = () => {
 
     await mutate({ variables: { email } });
 
-    Router.push("/verification/resend?sent=true");
+    Router.push("/accounts/verification/resend?sent=true");
   };
 
   return (

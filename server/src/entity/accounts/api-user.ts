@@ -8,9 +8,9 @@ export class ApiUser {
   @PrimaryColumn()
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   loggedName: string;
 
-  @Column()
+  @Column({ nullable: true })
   loggedEmail: string;
 }

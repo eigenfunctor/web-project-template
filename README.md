@@ -45,12 +45,11 @@ Once the server is up, you may immediately work with the graphql playground unde
 - You may enable the root account with the `ENABLE_ROOT_ACCOUNT` environment variable set to `1`
 - You may override the default root password (`root`) with the `ROOT_PASSWORD` set to any non empty string.
 - [express](https://expressjs.com/) is used to run the webserver hosting the GraphQL API and the authorization REST API.
-- [apollo-server](https://www.apollographql.com/docs/apollo-server/) is used to define the GraphQL schema and run the server.
-- [apollo-server-express](https://www.apollographql.com/docs/apollo-server/integrations/middleware/) is used to run the webserver hosting the GraphQL API and the authorization REST API.
-- [passport](http://www.passportjs.org/) greatly simplifies authentication logic. The `/auth` route prefixes all authentication provider routes.
-  - [Authentication providers](http://www.passportjs.org/packages/) may be added similar to how `server/src/routers/provider/local.ts` is used for local authentication.
-  - `server/src/entity/local-user.ts` models locally registered users.
-  - `server/src/entity/api-user.ts` models users authenticated by arbitrary authentication providers.
+- [apollo-server](https://www.apollographql.com/docs/apollo-server/) is used to define the GraphQL schema.
+- [apollo-server-express](https://www.apollographql.com/docs/apollo-server/integrations/middleware/) is used to run the [express middleware](https://expressjs.com/en/guide/using-middleware.html) which binds the GraphQL API endpoint.
+- [passport](http://www.passportjs.org/) greatly simplifies authentication logic. The `/auth/provider` route prefixes all authentication provider routes.
+  - [Passport authentication strategies](http://www.passportjs.org/) may be added similar to how `server/src/routers/provider/local.ts` is used for local authentication.
+  - See [server/src/auth/provider/README.md](server/src/auth/provider/README.md) for instructions on adding more [passport strategies](http://www.passportjs.org).
 
 ## Docker Compose
 All microservices mentioned in the previous section are wired together using a docker-compose configuration.

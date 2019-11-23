@@ -13,8 +13,8 @@ import {
   InputLabel,
   Typography
 } from "@material-ui/core";
-import ErrorList from "../components/error-list";
-import { FormStatus, useForm, useAuthCheck } from "../hooks";
+import { useForm, useAuthCheck } from "../../hooks";
+import StringInputField from "../../components/string-input-field";
 
 const SIGNUP_MUTATION = gql`
   mutation SignupMutation($form: SignupForm!, $validate: Boolean) {
@@ -34,7 +34,7 @@ const Signup: React.FunctionComponent = () => {
   const { submit, loading, form, formStatus, setField } = useForm(
     SIGNUP_MUTATION,
     {
-      successRedirect: "/login",
+      successRedirect: "/accounts/login",
       constants: {
         email: "",
         fullName: "",
@@ -51,23 +51,23 @@ const Signup: React.FunctionComponent = () => {
       </Box>
       <form onSubmit={submit}>
         <Grid container direction="column">
-          <InputField
+          <StringInputField
             formKey={"email"}
             label="Email"
             {...{ form, formStatus, setField }}
           />
-          <InputField
+          <StringInputField
             formKey={"fullName"}
             label="Full Name"
             {...{ form, formStatus, setField }}
           />
-          <InputField
+          <StringInputField
             password
             formKey={"password"}
             label="Password"
             {...{ form, formStatus, setField }}
           />
-          <InputField
+          <StringInputField
             password
             formKey={"confirmPassword"}
             label="Confirm Password"
@@ -90,43 +90,3 @@ const Signup: React.FunctionComponent = () => {
 };
 
 export default Signup;
-
-interface InputFieldProps {
-  formKey: string;
-  label: string;
-  form: { [key: string]: any };
-  formStatus: FormStatus;
-  setField: (
-    key: string
-  ) => (
-    event: React.SyntheticEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => void;
-  password?: boolean;
-}
-
-const InputField: React.FunctionComponent<InputFieldProps> = ({
-  formKey,
-  label,
-  form,
-  formStatus,
-  setField,
-  password
-}) => {
-  console.log(formStatus, formKey);
-  return (
-    <Box width={1} py={2}>
-      <InputLabel htmlFor={`${formKey}--inputfield`}>{label}</InputLabel>
-      <Input
-        fullWidth
-        type={password && "password"}
-        id={`${formKey}--inputfield`}
-        name={formKey}
-        value={form[formKey] || ""}
-        onChange={setField(formKey)}
-      />
-      <ErrorList
-        errors={formStatus ? formStatus.inputErrors[formKey] || [] : []}
-      />
-    </Box>
-  );
-};

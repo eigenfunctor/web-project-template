@@ -1,6 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import styled from "@emotion/styled";
 import {
   Box,
   Grid,
@@ -10,7 +11,7 @@ import {
   InputLabel,
   Input
 } from "@material-ui/core";
-import { useAuthCheck } from "../hooks";
+import { useAuthCheck } from "../../hooks";
 
 const Login: React.FunctionComponent = () => {
   useAuthCheck({ successRedirect: "/" });
@@ -28,7 +29,7 @@ const Login: React.FunctionComponent = () => {
           </Box>
         </Box>
       )}
-      <form method="POST" action="/auth/local">
+      <form method="POST" action="/auth/provider/local">
         <input
           type="hidden"
           id="successRedirect"
@@ -39,7 +40,7 @@ const Login: React.FunctionComponent = () => {
           type="hidden"
           id="failureRedirect"
           name="failureRedirect"
-          value="/login?failure=true"
+          value="/accounts/login?failure=true"
         />
         <Grid container direction="column">
           <Box width={1} py={2}>
@@ -56,12 +57,12 @@ const Login: React.FunctionComponent = () => {
             </Button>
             <Box>
               <Box>
-                <Link href="/password/send-reset">
+                <Link href="/accounts/password/send-reset">
                   <a>Reset my password.</a>
                 </Link>
               </Box>
               <Box py={[1]}>
-                <Link href="/verification/resend">
+                <Link href="/accounts/verification/resend">
                   <a>Resend verification email.</a>
                 </Link>
               </Box>
@@ -69,8 +70,30 @@ const Login: React.FunctionComponent = () => {
           </Grid>
         </Grid>
       </form>
+      <br />
+      <hr />
+      <br />
+      {/*
+      <Grid container justify="center" alignItems="center">
+        <GoogleSigninButton />
+      </Grid>
+      */}
     </Box>
   );
 };
 
 export default Login;
+
+const GoogleSigninButton = () => {
+  const [state, setState] = React.useState("normal");
+
+  return (
+    <a
+      href="/auth/provider/google"
+      onPointerDown={() => setState("pressed")}
+      onPointerUp={() => setState("normal")}
+    >
+      <img src={`/google/btn_google_signin_dark_${state}_web.png`} />
+    </a>
+  );
+};

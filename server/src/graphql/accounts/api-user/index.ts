@@ -1,5 +1,5 @@
 import { gql } from "apollo-server";
-import { Admin } from "../../entity";
+import { Admin } from "../../../entity";
 
 export const typeDefs = gql`
   extend type Query {

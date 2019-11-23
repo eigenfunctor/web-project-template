@@ -97,12 +97,12 @@ const Nav: React.FunctionComponent = () => {
             ) : (
               <Box p={[3]}>
                 <Grid container direction="row" justify="space-between">
-                  <NavLink href="/login">
+                  <NavLink href="/accounts/login">
                     <Button variant="contained" color="primary">
                       Login
                     </Button>
                   </NavLink>
-                  <NavLink href="/signup">
+                  <NavLink href="/accounts/signup">
                     <Button variant="contained" color="primary">
                       Signup
                     </Button>
@@ -127,7 +127,7 @@ const Nav: React.FunctionComponent = () => {
                 <h2>Administration</h2>
                 <List>
                   <ListItem>
-                    <NavLink href="/admin/users">Users</NavLink>
+                    <NavLink href="/accounts/admin/users">Users</NavLink>
                   </ListItem>
                 </List>
               </Box>

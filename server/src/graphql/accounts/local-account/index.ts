@@ -6,8 +6,8 @@ import {
   LocalUser,
   EmailVerification,
   PasswordReset
-} from "../../entity";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../../email";
+} from "../../../entity";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../../../email";
 
 import argon2 = require("argon2");
 import moment = require("moment");
@@ -75,6 +75,8 @@ export const typeDefs = gql`
   }
 `;
 
+const MIN_PASSWORD_LENGTH = 8;
+
 export const resolvers = {
   Query: {
     async isVerified(
@@ -115,7 +117,6 @@ export const resolvers = {
       }
 
       // Fail if the given password is too short.
-      const MIN_PASSWORD_LENGTH = 8;
       if (!form.password || form.password.length < MIN_PASSWORD_LENGTH) {
         formStatus.inputErrors.password.push(
           `Please use a password of at least ${MIN_PASSWORD_LENGTH} charactars.`
@@ -294,6 +295,14 @@ export const resolvers = {
         }
       }
 
+      // Fail if the given password is too short.
+      if (!form.password || form.password.length < MIN_PASSWORD_LENGTH) {
+        formStatus.inputErrors.password.push(
+          `Please use a password of at least ${MIN_PASSWORD_LENGTH} charactars.`
+        );
+        formStatus.success = false;
+      }
+
       if (form.password !== form.confirmPassword) {
         formStatus.inputErrors.password.push(
           "Password and password confirmation do not match."
@@ -351,11 +360,6 @@ export async function updateRootAccount(db: Connection) {
     rootAccount.fullName = "root";
     rootAccount.email = "root";
     rootAccount.passwordHash = await argon2.hash(
-      process.env.ROOT_PASSWORD && process.env.ROOT_PASSWORD.length > 0
-        ? process.env.ROOT_PASSWORD
-        : "root"
-    );
-    console.log(
       process.env.ROOT_PASSWORD && process.env.ROOT_PASSWORD.length > 0
         ? process.env.ROOT_PASSWORD
         : "root"

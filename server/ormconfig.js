@@ -1,14 +1,16 @@
+const path = require("path");
+
 module.exports = {
   synchronize: process.env.NODE_ENV !== "production",
   logging: false,
-  entities: ["src/entity/**/*.ts"],
-  migrations: ["src/migration/**/*.ts"],
-  subscribers: ["src/subscriber/**/*.ts"],
+  entities: [path.join(__dirname, "src/entity/**/*.ts")],
+  migrations: [path.join(__dirname, "src/migration/**/*.ts")],
+  subscribers: [path.join(__dirname, "src/subscriber/**/*.ts")],
   cache: true,
   cli: {
-    entitiesDir: "src/entity",
-    migrationsDir: "src/migration",
-    subscribersDir: "src/subscriber"
+    entitiesDir: path.join(__dirname, "src/entity"),
+    migrationsDir: path.join(__dirname, "src/migration"),
+    subscribersDir: path.join(__dirname, "src/subscriber")
   },
   type: "postgres",
   host: process.env.DB_HOST || "localhost",

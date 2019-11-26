@@ -176,9 +176,12 @@ export const resolvers = {
 
     // Set the verified flag in the verification entry if it exists or fail silently.
     async verifyAccount(_, { verificationID }, { db }: { db: Connection }) {
-      const verification = await db.manager.findOne(EmailVerification, {
-        id: verificationID
-      });
+      let verification;
+      try {
+        verification = await db.manager.findOne(EmailVerification, {
+          id: verificationID
+        });
+      } catch {}
 
       if (!verification) {
         return {
@@ -268,10 +271,13 @@ export const resolvers = {
         return formStatus;
       }
 
-      const reset = await db.manager.findOne(PasswordReset, {
-        where: { id: form.resetID },
-        relations: ["user"]
-      });
+      let reset;
+      try {
+        reset = await db.manager.findOne(PasswordReset, {
+          where: { id: form.resetID },
+          relations: ["user"]
+        });
+      } catch {}
 
       // Fail if there is no password reset entry with the given reset ID
       if (!reset) {
@@ -350,6 +356,16 @@ export async function isVerifiedHelper(
 }
 
 export async function updateRootAccount(db: Connection) {
+  if (process.env.ENABLE_ROOT_ACCOUNT === "1") {
+    console.warn(
+      `WARNING: The ENABLE_ROOT_ACCOUNT environment variable is set.`
+    );
+    console.warn(
+      `WARNING: This means anyone can login to an administrator account using the password set by the ROOT_PASSWORD environment variable or "root" by default.`
+    );
+    console.warn(`WARNING: Unset ENABLE_ROOT_ACCOUNT to subdue this warning.`);
+  }
+
   await db.transaction(async tx => {
     let rootAccount = await tx.findOne(LocalUser, { email: "root" });
 

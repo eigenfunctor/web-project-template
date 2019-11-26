@@ -57,11 +57,20 @@ All microservices mentioned in the previous section are wired together using a d
 You should edit the `docker-compose.yml` and edit image names and tags. Run `docker-compose build` to build production containers.
 
 ### Development
-- `dev.yml` holds the development configuration.
+- `dev.yml` holds the development environment configuration.
  - Use `docker-compose -f dev.yml up` to start the development environment.
  - [Traefik](https://traefik.io/) will route requests to the correct service from `http://localhost:3000`.
  - [The SMTP container](https://hub.docker.com/r/namshi/smtp) runs as the SMTP service for outgoing emails.
  - [The Postgres container](https://hub.docker.com/_/postgres) hosts a development database under the pg-dev service.
 - `docker-compose.yml` only holds the image names and tags for the production docker images.
 - Production configurations depend on the deployment environment, and so there is no default configuration.
+- You can acquire a shell into both the `client` and `server` containers respectively by running:
+  - `docker-compose -f dev.yml exec client bash`
+  - `docker-compose -f dev.yml exec server bash`
+- You can run tests in watch mode for both the `client` and `server` containers respectively by running:
+  - `docker-compose -f dev.yml exec client yarn test:watch`
+  - `docker-compose -f dev.yml exec server yarn test:watch`
+
+### Testing
+CI/CD pipelines will use the `test.yml` docker-compose configuration to run automated tests across the application. A mock Postgres database and connection is provisioned as a service for each test suite.
 

@@ -19,6 +19,13 @@ export async function sendEmail(params: {
   text: string;
   html: string;
 }) {
+  if (!(process.env.SMTP_HOST && process.env.SMTP_PORT)) {
+    console.warn(
+      "WARNING: Please set the SMTP_HOST and SMTP_PORT environment variables."
+    );
+    return;
+  }
+
   if (!process.env.APP_BASE_URL) {
     console.warn("WARNING: Please set the APP_BASE_URL environment variable.");
     return;

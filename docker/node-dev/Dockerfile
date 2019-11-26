@@ -1,6 +1,6 @@
 FROM node:alpine
 
-RUN apk add build-base python wget curl
+RUN apk add build-base python wget curl bash git
 
 RUN adduser -D dev-user \ 
   && mkdir /app \

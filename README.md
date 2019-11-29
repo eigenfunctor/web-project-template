@@ -67,10 +67,9 @@ You should edit the `docker-compose.yml` and edit image names and tags. Run `doc
 - You can acquire a shell into both the `client` and `server` containers respectively by running:
   - `docker-compose -f dev.yml exec client bash`
   - `docker-compose -f dev.yml exec server bash`
-- You can run tests in watch mode for both the `client` and `server` containers respectively by running:
-  - `docker-compose -f dev.yml exec client yarn test:watch`
+- You can run tests in watch mode for the `server` container by running:
   - `docker-compose -f dev.yml exec server yarn test:watch`
 
 ### Testing
-CI/CD pipelines will use the `test.yml` docker-compose configuration to run automated tests across the application. A mock Postgres database and connection is provisioned as a service for each test suite.
+CI/CD pipelines will use the `test.yml` docker-compose configuration to run automated tests across the application.
 

@@ -14,32 +14,28 @@ export function useAuthCheck(props?: AuthCheckProps) {
   const { loading, data } = useQuery(gql`
     query ProfileQuery {
       profile {
+        provider
         id
+        loggedEmail
+        loggedName
       }
     }
   `);
-
-  const [loggedIn, setLoggedIn] = React.useState(false);
 
   React.useEffect(() => {
     if (loading) {
       return;
     }
-
     if (data && data.profile) {
       if (successRedirect) {
         Router.push(successRedirect);
       }
-
-      setLoggedIn(true);
     } else {
       if (failureRedirect) {
         Router.push(failureRedirect);
       }
-
-      setLoggedIn(false);
     }
   }, [loading, data]);
 
-  return loggedIn;
+  return data && data.profile;
 }

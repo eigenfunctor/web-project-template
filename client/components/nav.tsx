@@ -18,7 +18,7 @@ import styled from "@emotion/styled";
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
-import { useAdminCheck } from "../hooks";
+import { useAuthCheck, useAdminCheck } from "../hooks";
 
 const NavLinkContainer = styled.div`
   font-weight: bold;
@@ -41,14 +41,7 @@ const NavLink: React.FunctionComponent<LinkProps> = ({
 );
 
 const Nav: React.FunctionComponent = () => {
-  const { data } = useQuery(gql`
-    query ProfileQuery {
-      profile {
-        loggedName
-      }
-    }
-  `);
-
+  const profile = useAuthCheck();
   const isAdmin = useAdminCheck();
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -79,11 +72,11 @@ const Nav: React.FunctionComponent = () => {
           </Grid>
           <Divider />
           <Box p={[1]}>
-            {data && data.profile ? (
+            {profile ? (
               <Grid container direction="column">
                 <Box p={[3]}>
                   <Typography variant="h6">
-                    Hello, {data.profile.loggedName}
+                    Hello, {profile.loggedName}
                   </Typography>
                   <Box my={[2]}>
                     <a href="/auth/logout">

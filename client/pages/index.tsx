@@ -18,13 +18,6 @@ const HomeContainer = styled.div`
   .description {
     text-align: center;
   }
-  .row {
-    max-width: 880px;
-    margin: 80px auto 40px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-  }
   .card {
     padding: 18px 18px 24px;
     margin: 16px;
@@ -60,7 +53,7 @@ const Home: React.FunctionComponent = () => {
           reload.
         </p>
 
-        <div className="row">
+        <Grid container direction="column" alignItems="center">
           <a href="https://nextjs.org/docs" className="card">
             <h3>Documentation &rarr;</h3>
             <p>Learn more about Next.js in the documentation.</p>
@@ -76,7 +69,7 @@ const Home: React.FunctionComponent = () => {
             <h3>Examples &rarr;</h3>
             <p>Find other example boilerplates on the Next.js GitHub.</p>
           </a>
-        </div>
+        </Grid>
       </HomeContainer>
     </Grid>
   );

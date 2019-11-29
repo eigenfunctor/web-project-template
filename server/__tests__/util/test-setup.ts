@@ -18,12 +18,17 @@ export function testSetup(): Refs {
   const database = `${process.env.DB_NAME}--test--${id}`;
 
   beforeAll(async () => {
-    const tempDB = await createConnection(ormconfig);
+    const tempDB = await createConnection({ ...ormconfig, cache: false });
     await tempDB.query(`DROP DATABASE IF EXISTS "${database}"`);
     await tempDB.query(`CREATE DATABASE "${database}"`);
     await tempDB.close();
 
-    refs.db = await createConnection({ ...ormconfig, database, name: id });
+    refs.db = await createConnection({
+      ...ormconfig,
+      cache: false,
+      database,
+      name: id
+    });
     refs.app = await createServer(refs.db);
   });
 

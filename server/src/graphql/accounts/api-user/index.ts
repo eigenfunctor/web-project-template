@@ -1,5 +1,6 @@
 import { gql } from "apollo-server";
 import { Admin } from "../../../entity";
+import { Profile } from "../../profile";
 
 export const typeDefs = gql`
   extend type Query {
@@ -21,7 +22,7 @@ export const typeDefs = gql`
 
 export const resolvers = {
   Query: {
-    profile(_, __, { profile }) {
+    profile(_, __, { profile }: { profile: Profile }) {
       return profile;
     }
   }

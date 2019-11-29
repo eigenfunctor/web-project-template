@@ -9,6 +9,7 @@ interface AdminCheckProps {
   failureRedirect?: string;
 }
 
+// TODO use isAdmin with session change
 export function useAdminCheck(props?: AdminCheckProps): boolean {
   const { successRedirect, failureRedirect } = props || {};
 

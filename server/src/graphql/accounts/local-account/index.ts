@@ -8,6 +8,7 @@ import {
   PasswordReset
 } from "../../../entity";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../../../email";
+import { Profile } from "../../profile";
 
 import argon2 = require("argon2");
 import moment = require("moment");
@@ -82,7 +83,7 @@ export const resolvers = {
     async isVerified(
       _,
       __,
-      { db, profile }: { db: Connection; profile?: any }
+      { db, profile }: { db: Connection; profile?: Profile }
     ) {
       return await isVerifiedHelper(db, profile);
     }
@@ -338,7 +339,7 @@ export const resolvers = {
 
 export async function isVerifiedHelper(
   db: Connection,
-  profile: any
+  profile: Profile
 ): Promise<boolean> {
   if (!(profile && profile.id)) {
     throw new ForbiddenError("Unauthorized.");
@@ -353,72 +354,4 @@ export async function isVerifiedHelper(
   });
 
   return !!verified;
-}
-
-export async function updateRootAccount(db: Connection) {
-  if (process.env.ENABLE_ROOT_ACCOUNT === "1") {
-    console.warn(
-      `WARNING: The ENABLE_ROOT_ACCOUNT environment variable is set.`
-    );
-    console.warn(
-      `WARNING: This means anyone can login to an administrator account using the password set by the ROOT_PASSWORD environment variable or "root" by default.`
-    );
-    console.warn(`WARNING: Unset ENABLE_ROOT_ACCOUNT to subdue this warning.`);
-  }
-
-  await db.transaction(async tx => {
-    let rootAccount = await tx.findOne(LocalUser, { email: "root" });
-
-    if (!rootAccount) {
-      rootAccount = new LocalUser();
-    }
-
-    rootAccount.fullName = "root";
-    rootAccount.email = "root";
-    rootAccount.passwordHash = await argon2.hash(
-      process.env.ROOT_PASSWORD && process.env.ROOT_PASSWORD.length > 0
-        ? process.env.ROOT_PASSWORD
-        : "root"
-    );
-
-    await tx.save(rootAccount);
-
-    let apiUser = await tx.findOne(ApiUser, {
-      provider: "local",
-      id: rootAccount.id
-    });
-
-    if (!apiUser) {
-      apiUser = new ApiUser();
-    }
-
-    apiUser.provider = "local";
-    apiUser.id = rootAccount.id;
-
-    apiUser.loggedName = rootAccount.fullName;
-    apiUser.loggedEmail = rootAccount.email;
-
-    await tx.save(apiUser);
-
-    const adminMatches = await tx.query(
-      ...tx
-        .createQueryBuilder(Admin, "admin")
-        .where(
-          `"admin"."userProvider" = :provider AND "admin"."userId" = :id`,
-          { provider: apiUser.provider, id: apiUser.id }
-        )
-        .getQueryAndParameters()
-    );
-
-    let admin =
-      adminMatches[0] &&
-      (await tx.findOne(Admin, { id: adminMatches[0].admin_id }));
-
-    if (!admin) {
-      admin = new Admin();
-      admin.user = apiUser;
-    }
-
-    await tx.save(admin);
-  });
 }

@@ -2,9 +2,9 @@ import * as request from "supertest";
 import { Connection } from "typeorm";
 import { testSetup, graphqlRequest, login, signup } from "../util";
 import {
-  LocalUser,
-  EmailVerification,
   ApiUser,
+  EmailVerification,
+  LocalUser,
   PasswordReset
 } from "../../src/entity";
 

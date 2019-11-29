@@ -1,7 +1,7 @@
 import { Connection } from "typeorm";
 import useAuthRoutes from "./auth";
 import createGraphqlServer from "./graphql";
-import { updateRootAccount } from "./graphql/accounts/local-account";
+import { updateRootAccount } from "./graphql/accounts/admin";
 
 import express = require("express");
 import session = require("express-session");

@@ -5,6 +5,7 @@ RUN apk add build-base python wget curl bash git
 ARG DIRECTORY=./no-directory-given
 
 COPY $DIRECTORY /app
+COPY ./shared /shared
 
 WORKDIR /app
 

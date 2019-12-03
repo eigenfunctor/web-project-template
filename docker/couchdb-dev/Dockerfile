@@ -9,16 +9,16 @@ RUN \
 RUN \
   echo "sleep 3" > /startup.sh && \
   echo "curl \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-UserName=initializer \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-Roles=admin \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-username=initializer \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-roles=admin \ " >> /startup.sh && \
   echo "-X PUT http://127.0.0.1:\$PORT/_user" >> /startup.sh && \
   echo "curl \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-UserName=initializer \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-Roles=admin \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-username=initializer \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-roles=admin \ " >> /startup.sh && \
   echo "-X PUT http://127.0.0.1:\$PORT/_replicator" >> /startup.sh && \
   echo "curl \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-UserName=initializer \ " >> /startup.sh && \
-  echo "-H X-Auth-CouchDB-Roles=admin \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-username=initializer \ " >> /startup.sh && \
+  echo "-H x-auth-couchdb-roles=admin \ " >> /startup.sh && \
   echo "-X PUT http://127.0.0.1:\$PORT/_global_changes" >> /startup.sh
 
 CMD /opt/couchdb/bin/couchdb & { sh /startup.sh; fg; }

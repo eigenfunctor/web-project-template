@@ -9,6 +9,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "./build",
+    "declaration": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
@@ -16,6 +18,6 @@
   },
   "exclude": ["node_modules"],
   "files": [
-    "node_modules/documents"
+    "src/index.ts"
   ]
 }

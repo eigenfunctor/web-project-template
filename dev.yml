@@ -55,14 +55,6 @@ services:
       - ./server:/app
       - ./shared:/shared
 
-  couchdb-dev:
-    build: docker/couchdb-dev
-    environment:
-      COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
-      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD-couchdb-dev-password}
-    volumes:
-      - couchdb:/opt/couchdb/data
-
   pg-dev:
     image: postgres:11.5-alpine
     environment:
@@ -70,6 +62,14 @@ services:
       POSTGRES_DB: ${DB_NAME-server-dev-db}
     volumes:
       - pg:/var/lib/postgresql/data
+
+#  couchdb-dev:
+#    build: docker/couchdb-dev
+#    environment:
+#     COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
+#     COUCHDB_PASSWORD: ${COUCHDB_PASSWORD-couchdb-dev-password}
+#   volumes:
+#     - couchdb:/opt/couchdb/data
 
   smtp:
     image: namshi/smtp

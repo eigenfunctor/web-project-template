@@ -70,6 +70,3 @@ You should edit the `docker-compose.yml` and edit image names and tags. Run `doc
 - You can run tests in watch mode for the `server` container by running:
   - `docker-compose -f dev.yml exec server yarn test:watch`
 
-### Testing
-CI/CD pipelines will use the `test.yml` docker-compose configuration to run automated tests across the application.
-

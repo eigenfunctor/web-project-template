@@ -1,4 +1,5 @@
 import React from "react";
+import { Box } from "@material-ui/core";
 import { useDebounce } from "react-use";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
@@ -73,12 +74,14 @@ const Users: React.FunctionComponent = () => {
   }
 
   return (
-    <Table
-      data={data && data.allUsers}
-      refetchTable={refetch}
-      cellComponentMap={CELL_COMPONENT_MAP}
-      {...tableState}
-    />
+    <Box minWidth={1024}>
+      <Table
+        data={data && data.allUsers}
+        refetchTable={refetch}
+        cellComponentMap={CELL_COMPONENT_MAP}
+        {...tableState}
+      />
+    </Box>
   );
 };
 

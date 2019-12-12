@@ -44,8 +44,7 @@ services:
       DB_HOST: pg-dev
       DB_PASSWORD: ${DB_PASSWORD-server-dev-password}
       DB_NAME: ${DB_NAME-server-dev-db} 
-      COUCHDB_HOST: couchdb-dev
-      COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
+      COUCHDB_HOST: http://couchdb-dev:5984
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.entrypoints=web
@@ -63,13 +62,16 @@ services:
     volumes:
       - pg:/var/lib/postgresql/data
 
-#  couchdb-dev:
-#    build: docker/couchdb-dev
-#    environment:
-#     COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
-#     COUCHDB_PASSWORD: ${COUCHDB_PASSWORD-couchdb-dev-password}
-#   volumes:
-#     - couchdb:/opt/couchdb/data
+  couchdb-dev:
+    build: docker/couchdb-dev
+    environment:
+      COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
+      COUCHDB_PASSWORD: ${COUCHDB_PASSWORD-couchdb-dev-password}
+    ports:
+      - ${DEV_COUCHDB_PORT-5984}:5984
+    volumes:
+      - couchdb:/opt/couchdb/data
+      - /var/run/docker.sock:/var/run/docker.sock # required for full-text-search sidecar
 
   smtp:
     image: namshi/smtp

@@ -9,7 +9,7 @@ services:
       - --api.insecure=true
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
+      - --entrypoints.http.address=:80
     ports:
       - ${DEV_HTTP_PORT-3000}:80
       - ${DEV_TRAEFIK_UI_PORT-3001}:8080
@@ -24,7 +24,7 @@ services:
       APP_PROXY_URI: http://app-proxy
     labels:
       - traefik.enable=true
-      - traefik.http.routers.client.entrypoints=web
+      - traefik.http.routers.client.entrypoints=http
       - traefik.http.routers.client.rule=PathPrefix(`/`)
       - traefik.http.services.client.loadbalancer.server.port=3000
     volumes:
@@ -48,7 +48,7 @@ services:
       COUCHDB_AUTH_SECRET: ${COUCHDB_AUTH_SECRET-couchdb-auth-secret}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.server.entrypoints=web
+      - traefik.http.routers.server.entrypoints=http
       - traefik.http.routers.server.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`) || PathPrefix(`/couchdb`)
       - traefik.http.services.server.loadbalancer.server.port=3001
     volumes:

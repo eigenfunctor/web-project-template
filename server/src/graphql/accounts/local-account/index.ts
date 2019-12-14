@@ -8,7 +8,7 @@ import {
   PasswordReset
 } from "../../../entity";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../../../email";
-import { Profile } from "../../profile";
+import { Profile } from "../../../auth/profile";
 
 import argon2 = require("argon2");
 import moment = require("moment");

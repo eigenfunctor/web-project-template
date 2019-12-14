@@ -1,6 +1,6 @@
 import * as request from "supertest";
 import { Connection } from "typeorm";
-import { testSetup, graphqlRequest, login, signup } from "../util";
+import { appSetup, graphqlRequest, login, signup } from "../util";
 import { Admin, ApiUser, LocalUser, PasswordReset } from "../../src/entity";
 
 const nonAdminSignup = {
@@ -89,7 +89,7 @@ const setEnvironementVariables = (rootEnabled, rootPass) => {
 };
 
 describe("admin > set admin, list users", () => {
-  const refs = testSetup();
+  const refs = appSetup();
   const apiUsers = setupApiUsers(refs);
 
   const profile2AdminRecordQuery: (
@@ -258,7 +258,7 @@ describe("admin > ENABLE_ROOT_ACCOUNT=1", () => {
   const rootPass = "myrootpass";
   setEnvironementVariables("1", rootPass);
 
-  const refs = testSetup();
+  const refs = appSetup();
   const apiUsers = setupApiUsers(refs);
 
   const getRootProfile = async (db: Connection) => {
@@ -332,7 +332,7 @@ describe("admin > ENABLE_ROOT_ACCOUNT=0", () => {
   const rootPass = "myrootpass";
   setEnvironementVariables("0", rootPass);
 
-  const refs = testSetup();
+  const refs = appSetup();
   const apiUsers = setupApiUsers(refs);
 
   it("should disallow root login if ENABLE_ROOT_ACCOUNT is unset", async () => {

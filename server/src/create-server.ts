@@ -1,5 +1,6 @@
 import { Connection } from "typeorm";
-import useAuthRoutes from "./auth";
+import { useAuthRoutes } from "./auth";
+import { useCouchDBProxy } from "./couchdb-proxy";
 import createGraphqlServer from "./graphql";
 import { updateRootAccount } from "./graphql/accounts/admin";
 
@@ -11,6 +12,10 @@ import passport = require("passport");
 export async function createServer(
   db: Connection
 ): Promise<express.Application> {
+  if (!process.env.COUCHDB_HOST || process.env.COUCHDB_HOST.length === 0) {
+    console.warn("WARNING: COUCHDB_HOST environment variable is not set.");
+  }
+
   await updateRootAccount(db);
 
   const app = express();
@@ -31,6 +36,7 @@ export async function createServer(
   app.use(bodyParser.json());
 
   useAuthRoutes(db, app);
+  useCouchDBProxy(db, app);
 
   createGraphqlServer(db).applyMiddleware({ app });
 

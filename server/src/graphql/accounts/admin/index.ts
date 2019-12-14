@@ -2,7 +2,7 @@ import { Connection } from "typeorm";
 import { gql, ForbiddenError, ApolloError } from "apollo-server";
 import { ApiUser, LocalUser, Admin } from "../../../entity";
 import { runTableQuery } from "../../table";
-import { Profile } from "../../profile";
+import { Profile } from "../../../auth/profile";
 
 import argon2 = require("argon2");
 

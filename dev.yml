@@ -45,10 +45,11 @@ services:
       DB_PASSWORD: ${DB_PASSWORD-server-dev-password}
       DB_NAME: ${DB_NAME-server-dev-db} 
       COUCHDB_HOST: http://couchdb-dev:5984
+      COUCHDB_AUTH_SECRET: ${COUCHDB_AUTH_SECRET-couchdb-auth-secret}
     labels:
       - traefik.enable=true
       - traefik.http.routers.server.entrypoints=web
-      - traefik.http.routers.server.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`)
+      - traefik.http.routers.server.rule=PathPrefix(`/auth`) || PathPrefix(`/graphql`) || PathPrefix(`/couchdb`)
       - traefik.http.services.server.loadbalancer.server.port=3001
     volumes:
       - ./server:/app
@@ -67,6 +68,7 @@ services:
     environment:
       COUCHDB_USER: ${COUCHDB_USER-couchdb-dev-user}
       COUCHDB_PASSWORD: ${COUCHDB_PASSWORD-couchdb-dev-password}
+      COUCHDB_AUTH_SECRET: ${COUCHDB_AUTH_SECRET-couchdb-auth-secret}
     ports:
       - ${DEV_COUCHDB_PORT-5984}:5984
     volumes:

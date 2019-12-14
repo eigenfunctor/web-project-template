@@ -9,8 +9,8 @@ export class ApiUser {
   id: string;
 
   @Column({ nullable: true })
-  loggedName: string;
+  loggedName?: string;
 
   @Column({ nullable: true })
-  loggedEmail: string;
+  loggedEmail?: string;
 }

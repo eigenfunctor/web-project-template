@@ -1,6 +1,24 @@
 import { Application } from "express";
 import * as request from "supertest";
 import { graphqlRequest } from "../util";
+import { Profile } from "../../src/auth/profile";
+
+export async function profile(
+  agent: request.SuperTest<request.Test>
+): Promise<request.Response> {
+  const PROFILE_QUERY = `
+    query {
+      profile {
+        provider
+        id
+        loggedEmail
+        loggedName
+      }
+    }
+  `;
+
+  return graphqlRequest(agent, PROFILE_QUERY);
+}
 
 export async function login(
   agent: request.SuperTest<request.Test>,
@@ -22,7 +40,7 @@ export async function login(
 export async function signup(
   agent: request.SuperTest<request.Test>,
   form: object,
-  validate: boolean
+  validate?: boolean
 ): Promise<request.Response> {
   const SIGNUP_MUTATION = `
     mutation Signup($form: SignupForm!, $validate: Boolean) {

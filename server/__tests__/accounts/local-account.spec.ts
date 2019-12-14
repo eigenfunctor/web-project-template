@@ -1,6 +1,6 @@
 import * as request from "supertest";
 import { Connection } from "typeorm";
-import { testSetup, graphqlRequest, login, signup } from "../util";
+import { appSetup, graphqlRequest, profile, login, signup } from "../util";
 import {
   ApiUser,
   EmailVerification,
@@ -9,7 +9,7 @@ import {
 } from "../../src/entity";
 
 describe("local account > signup, verify, login/logout, reset password", () => {
-  const refs = testSetup();
+  const refs = appSetup();
 
   const countLocalUsersQuery: (db: Connection) => [string, any[]] = db =>
     db.manager
@@ -153,17 +153,6 @@ describe("local account > signup, verify, login/logout, reset password", () => {
     expect(parseInt(beforeCount) + 1).toEqual(parseInt(afterCount));
   });
 
-  const PROFILE_QUERY = `
-    query {
-      profile {
-        provider
-        id
-        loggedEmail
-        loggedName
-      }
-    }
-  `;
-
   it("should fail to login with bad credentials.", async () => {
     const invalids = [
       { email: validSignup.email, password: "badpassword" },
@@ -189,17 +178,17 @@ describe("local account > signup, verify, login/logout, reset password", () => {
     expect(response.status).toBe(302);
     expect(response.header.location).toBe("/pass");
 
-    response = await graphqlRequest(agent, PROFILE_QUERY);
+    response = await profile(agent);
     expect(response.status).toBe(200);
-    expect(response.body.profile).not.toBeNull();
+    expect(response.body.data.profile).not.toBeNull();
 
     response = await agent.get("/auth/logout");
     expect(response.status).toBe(302);
     expect(response.header.location).toBe("/");
 
-    response = await graphqlRequest(agent, PROFILE_QUERY);
+    response = await profile(agent);
     expect(response.status).toBe(200);
-    expect(response.body.profile == null).toBe(true);
+    expect(response.body.data.profile == null).toBe(true);
   });
 
   const IS_VERIFIED_QUERY = `

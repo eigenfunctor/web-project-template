@@ -38,7 +38,9 @@ services:
     environment:
       ENABLE_ROOT_ACCOUNT: ${ENABLE_ROOT_ACCOUNT}
       ROOT_PASSWORD: ${ROOT_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET-default-session-secret}
       APP_BASE_URL: http://localhost:${DEV_HTTP_PORT-3000}
+      REDIS_URL: redis://redis-dev:6379
       SMTP_HOST: smtp
       SMTP_PORT: 25
       DB_HOST: pg-dev
@@ -54,6 +56,9 @@ services:
     volumes:
       - ./server:/app
       - ./shared:/shared
+
+  redis-dev:
+    image: redis:5-alpine
 
   pg-dev:
     image: postgres:11.5-alpine

@@ -42,6 +42,7 @@ Once the server is up, you may login with the frontend and work with the graphql
 - You may enable the root account with the `ENABLE_ROOT_ACCOUNT` environment variable set to `1`
 - You may override the default root password (`root`) with the `ROOT_PASSWORD` set to any non empty string.
 - [express](https://expressjs.com/) is used to run the webserver hosting the GraphQL API and the authorization REST API.
+  - You may set the `REDIS_URL` environment variable to use `connect-redis` as a session store.
 - [apollo-server](https://www.apollographql.com/docs/apollo-server/) is used to define the GraphQL schema.
 - [apollo-server-express](https://www.apollographql.com/docs/apollo-server/integrations/middleware/) is used to run the [express middleware](https://expressjs.com/en/guide/using-middleware.html) which binds the GraphQL API endpoint.
 - [passport](http://www.passportjs.org/) greatly simplifies authentication logic. The `/auth/provider` route prefixes all authentication provider routes.

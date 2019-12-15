@@ -8,6 +8,10 @@ import express = require("express");
 import session = require("express-session");
 import bodyParser = require("body-parser");
 import passport = require("passport");
+import redis = require("redis");
+import withRedisStore = require("connect-redis");
+
+const RedisStore = withRedisStore(session);
 
 export async function createServer(
   db: Connection
@@ -19,11 +23,27 @@ export async function createServer(
   await updateRootAccount(db);
 
   const app = express();
+
+  let secret = process.env.SESSION_SECRET;
+  if (!(process.env.SESSION_SECRET && process.env.SESSION_SECRET.length > 0)) {
+    console.warn(
+      "WARNING: The SESSION_SECRET environment variable is not set."
+    );
+
+    secret = "default-session-secret";
+  }
+
+  let store;
+  if (process.env.REDIS_URL && process.env.REDIS_URL.length > 0) {
+    const redisClient = redis.createClient(process.env.REDIS_URL);
+
+    store = new RedisStore({ client: redisClient });
+  }
+
   app.use(
     session({
-      // TODO: use a real secret
-      secret: "dev secret",
-      // TODO: use redis as a session store
+      store,
+      secret,
       resave: false,
       saveUninitialized: false
     })

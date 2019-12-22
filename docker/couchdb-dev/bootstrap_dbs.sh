@@ -1,4 +1,4 @@
-sleep 10
+sleep 15
 
 curl -X PUT "http://$COUCHDB_USER:$COUCHDB_PASSWORD@localhost:$INTERNAL_PORT/_users"
 curl -X PUT "http://$COUCHDB_USER:$COUCHDB_PASSWORD@localhost:$INTERNAL_PORT/_replicator"

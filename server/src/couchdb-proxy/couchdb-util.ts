@@ -42,7 +42,7 @@ export function getFetchHeaders(user: { name: string; roles: string }) {
   ) {
     token = crypto
       .createHmac("sha1", process.env.COUCHDB_AUTH_SECRET)
-      .update("db_test_teardown_admin")
+      .update(user.name)
       .digest("hex");
   }
 

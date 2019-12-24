@@ -104,6 +104,7 @@ const CELL_COMPONENT_MAP: {
     return (
       <Select
         native
+        style={{ width: "100%" }}
         value={row.isAdmin ? 1 : 0}
         onChange={async event => {
           await mutate({

@@ -1,48 +1,96 @@
+import * as R from "ramda";
+import Link from "next/link";
+import Router, { useRouter } from "next/router";
 import React from "react";
-import Link, { LinkProps } from "next/link";
-import { useQuery } from "@apollo/react-hooks";
-import gql from "graphql-tag";
 import {
   Box,
-  Button,
   Divider,
   Drawer,
   Grid,
   IconButton,
   List,
   ListItem,
-  Typography
+  Typography,
+  Button
 } from "@material-ui/core";
 import { useTheme } from "@material-ui/core/styles";
-import styled from "@emotion/styled";
 import MenuIcon from "@material-ui/icons/Menu";
 import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import { useAuthCheck, useAdminCheck } from "../hooks";
 
-const NavLinkContainer = styled.div`
-  font-weight: bold;
-  font-size: 1.1rem;
+interface NavSectionProps {
+  title: string;
+}
 
-  &:hover {
-    text-decoration: underline;
-  }
-`;
+const NavSection: React.FunctionComponent<NavSectionProps> = ({
+  title,
+  children
+}) => {
+  return (
+    <React.Fragment>
+      <ListItem>
+        <Typography variant="h6">{title}</Typography>
+      </ListItem>
+      <Box mx={[3]}>
+        <List>{children}</List>
+      </Box>
+    </React.Fragment>
+  );
+};
 
-const NavLink: React.FunctionComponent<LinkProps> = ({
-  children,
-  ...props
-}) => (
-  <NavLinkContainer>
-    <Link {...props}>
-      <a style={{ textDecoration: "none", color: "inherit" }}>{children}</a>
-    </Link>
-  </NavLinkContainer>
-);
+interface NavItemProps {
+  title: string;
+  to: string;
+  active?: boolean;
+}
+
+const NavItem: React.FunctionComponent<NavItemProps> = ({
+  title,
+  to,
+  active
+}) => {
+  return (
+    <ListItem>
+      <Typography
+        color={active ? "textPrimary" : "textSecondary"}
+        variant={active ? "h6" : "body1"}
+        style={{ cursor: "pointer" }}
+        onClick={() => Router.push(to)}
+      >
+        {title}
+      </Typography>
+    </ListItem>
+  );
+};
 
 const Nav: React.FunctionComponent = () => {
   const profile = useAuthCheck();
   const isAdmin = useAdminCheck();
+
+  const NAV_SECTIONS = [
+    { title: "Main", items: [{ title: "Home", to: "/" }] },
+    {
+      title: "Administration",
+      hide: !isAdmin,
+      items: [{ title: "Users", to: "/accounts/admin/users" }]
+    }
+  ];
+
+  const links = R.flatten(
+    NAV_SECTIONS.map((section, i) =>
+      section.items.map((item, j) => ({ i, j, to: item.to }))
+    )
+  );
+
+  const { asPath } = useRouter();
+
+  const match = links
+    .filter(link => asPath.startsWith(link.to))
+    .reduce(
+      R.maxBy(link => link.to.length),
+      links[0]
+    );
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
@@ -90,42 +138,43 @@ const Nav: React.FunctionComponent = () => {
             ) : (
               <Box p={[3]}>
                 <Grid container direction="row" justify="space-between">
-                  <NavLink href="/accounts/login">
-                    <Button variant="contained" color="primary">
-                      Login
-                    </Button>
-                  </NavLink>
-                  <NavLink href="/accounts/signup">
-                    <Button variant="contained" color="primary">
-                      Signup
-                    </Button>
-                  </NavLink>
+                  <Button
+                    onClick={() => Router.push("/accounts/login")}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Login
+                  </Button>
+                  <Button
+                    onClick={() => Router.push("/accounts/login")}
+                    variant="contained"
+                    color="primary"
+                  >
+                    Signup
+                  </Button>
                 </Grid>
               </Box>
             )}
           </Box>
           <Divider />
-          <Box p={[3]}>
-            <List>
-              <ListItem>
-                <NavLink href="/">Home</NavLink>
-              </ListItem>
-              {/* TODO:  add sidebar links here */}
-            </List>
-          </Box>
-          {isAdmin ? (
-            <React.Fragment>
-              <Divider />
-              <Box p={[3]}>
-                <h2>Administration</h2>
-                <List>
-                  <ListItem>
-                    <NavLink href="/accounts/admin/users">Users</NavLink>
-                  </ListItem>
-                </List>
-              </Box>
-            </React.Fragment>
-          ) : null}
+          <List>
+            {NAV_SECTIONS.map((section, i) =>
+              section.hide ? null : (
+                <React.Fragment key={i}>
+                  <NavSection title={section.title}>
+                    {section.items.map((item, j) => (
+                      <NavItem
+                        key={j}
+                        {...item}
+                        active={i === match.i && j === match.j}
+                      />
+                    ))}
+                  </NavSection>
+                  <Divider />
+                </React.Fragment>
+              )
+            )}
+          </List>
         </Box>
       </Drawer>
     </React.Fragment>

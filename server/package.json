@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "shared": "file:../shared",
     "apollo-server": "^2.9.7",
     "apollo-server-express": "^2.9.7",
     "argon2": "^0.25.0",

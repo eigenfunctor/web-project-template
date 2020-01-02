@@ -10,4 +10,4 @@ USER dev-user
 
 WORKDIR /app
 
-CMD yarn install && yarn dev
+CMD cd /shared && yarn install && yarn build && cd /app && yarn install && yarn dev

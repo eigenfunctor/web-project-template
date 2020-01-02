@@ -1,0 +1,29 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "Shared typescript library for the client and server packages.",
+  "main": "build/index.js",
+  "private": true,
+  "files": [
+    "*",
+    "build/*",
+    "build/**/*"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watchAll"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.25",
+    "@types/pouchdb": "^6.4.0",
+    "@types/pouchdb-find": "^6.3.4",
+    "jest": "^24.9.0",
+    "prettier": "^1.19.1",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.4"
+  },
+  "dependencies": {
+    "pouchdb": "^7.1.1"
+  }
+}

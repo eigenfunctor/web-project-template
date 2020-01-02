@@ -7,6 +7,8 @@ ARG DIRECTORY=./no-directory-given
 COPY $DIRECTORY /app
 COPY ./shared /shared
 
+RUN cd /shared && yarn install && yarn build && cd /app
+
 WORKDIR /app
 
 ENV NODE_ENV=production

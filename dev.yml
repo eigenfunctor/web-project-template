@@ -57,6 +57,22 @@ services:
       - ./server:/app
       - ./shared:/shared
 
+  shared:
+    image: node:alpine
+    working_dir: /shared
+    command: tail -f /dev/null
+    environment:
+      SMTP_HOST: smtp
+      SMTP_PORT: 25
+      REDIS_URL: redis://redis-dev:6379
+      DB_HOST: pg-dev
+      DB_PASSWORD: ${DB_PASSWORD-server-dev-password}
+      DB_NAME: ${DB_NAME-server-dev-db} 
+      COUCHDB_HOST: http://couchdb-dev:5984
+      COUCHDB_AUTH_SECRET: ${COUCHDB_AUTH_SECRET-couchdb-auth-secret}
+    volumes:
+      - ./shared:/shared
+
   redis-dev:
     image: redis:5-alpine
 

@@ -49,6 +49,18 @@ Once the server is up, you may login with the frontend and work with the graphql
   - [Passport authentication strategies](http://www.passportjs.org/) may be added similar to how `server/src/routers/provider/local.ts` is used for local authentication.
   - See [server/src/auth/provider/README.md](server/src/auth/provider/README.md) for instructions on adding more [passport strategies](http://www.passportjs.org).
 
+## Shared
+The [`shared/`](shared/) folder contains a library that acts as a local dependency for both the client and server packages.
+
+- The client and server containers install the `shared` package upon restart in development, and upon container build in production.
+- Both client and server code can import the shared package.
+  - Example: `import * as Shared from "shared"`.
+- There is a `shared` service defined in [`dev.yml`](dev.yml).
+  - Acquire a shell via:
+    - `docker-compose -f dev.yml exec shared sh`
+  - Run tests via:
+    - `docker-compose -f dev.yml exec shared yarn test:watch`
+
 ## Docker Compose
 All microservices mentioned in the previous section are wired together using a docker-compose configuration.
 

@@ -38,6 +38,8 @@ services:
       ENABLE_ROOT_ACCOUNT: ${ENABLE_ROOT_ACCOUNT}
       ROOT_PASSWORD: ${ROOT_PASSWORD}
       APP_BASE_URL: http://localhost:${DEV_HTTP_PORT-3000}
+      SESSION_SECRET: ${SESSION_SECRET-default-session-secret}
+      REDIS_URL: redis://redis-dev:6379
       SMTP_HOST: smtp
       SMTP_PORT: 25
       DB_HOST: pg-dev
@@ -50,6 +52,10 @@ services:
       - traefik.http.services.server.loadbalancer.server.port=3001
     volumes:
       - ./server:/app
+
+  redis-dev:
+    image: redis:5-alpine
+
 
   smtp:
     image: namshi/smtp
